@@ -14,36 +14,36 @@ gibbs_pdlm_basic <- function(U, FF, V, G, W, s1, P1, r0, ndraw, burn, thin){
   # P1: p x p matrix
   # r0: TT-vector
   # ndraw, burn, thin: integers
-
+  
   # ----------------------------------------------------------------------------
   # dimensions
   # ----------------------------------------------------------------------------
-
+  
   TT = nrow(U)
   n = ncol(U)
   p = dim(FF)[2]
   M = burn + thin * ndraw
-
+  
   # ----------------------------------------------------------------------------
   # preallocate storage
   # ----------------------------------------------------------------------------
-
+  
   S_draws = array(numeric(TT * p * ndraw), c(TT, p, ndraw))
   r_draws = matrix(0, TT, ndraw)
-
+  
   # ----------------------------------------------------------------------------
   # initialize
   # ----------------------------------------------------------------------------
-
+  
   r = r0
   draw = 0
-
+  
   for (m in 1:M) {
-
+    
     #---------------------------------------------------------------------------
     #  draw from p(states | ...)
     #---------------------------------------------------------------------------
-
+    
     Y = U * r
     
     model = SSModel(Y ~ -1 + SSMcustom(Z = FF,
@@ -55,28 +55,28 @@ gibbs_pdlm_basic <- function(U, FF, V, G, W, s1, P1, r0, ndraw, burn, thin){
                                        P1inf = matrix(0, p, p)),
                     H = V)
     S = simulateSSM(model, type = "states", nsim = 1)[, , 1]
-
+    
     #---------------------------------------------------------------------------
     #  draw from p(r | ...)
     #---------------------------------------------------------------------------
-
+    
     r = draw_lengths_given_else_FFS(U, FF, V, r, S)
-
+    
     #---------------------------------------------------------------------------
     #  store draw
     #---------------------------------------------------------------------------
-
+    
     if ( retain_draw(m, burn, thin) ) {
       draw = draw + 1
       S_draws[, , draw] = S
       r_draws[, draw] = r
     }
   }
-
+  
   draws = list(S = S_draws, r = r_draws)
-
+  
   return(draws)
-
+  
 }
 
 # ==============================================================================
@@ -178,7 +178,7 @@ gibbs_pdlm_intermediate <- function(U, FF, V, priorparams, init, ndraw, burn, th
 # ==============================================================================
 # ==============================================================================
 
-gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1){
+gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, regress=FALSE, x=NULL){
   # ----------------------------------------------------------------------------
   # dimensions
   # ----------------------------------------------------------------------------
@@ -187,11 +187,6 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
   n = ncol(U)
   p = dim(FF)[2]
   M = burn + thin * ndraw
-  
-  # ----------------------------------------------------------------------------
-  # create or unpack prior hyperparameters
-  # 3/11/2024: NOT MUCH UNPACKING GOING ON HERE!
-  # ----------------------------------------------------------------------------
   
   if(is.null(prior)){
     s1 = numeric(p)
@@ -204,10 +199,19 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
     V0 = (v0 - p - 1) * diag(p)
     B0 = matrix(0, p, p) #diag(p)
     invO0 = diag(p)
-    GW_prior = list(v = v0, P = V0, B = B0, invO = invO0)
   }else{
-    
+    s1 = prior$s1
+    P1 = prior$P1
+    gamma_prmean = prior$gamma_prmean
+    gamma_prvar = prior$gamma_prvar
+    Gamma_prdf = prior$Gamma_prdf
+    Gamma_prscale = prior$Gamma_prscale
+    v0 = prior$v0
+    V0 = prior$V0
+    B0 = prior$B0
+    invO0 = prior$invO0
   }
+  GW_prior = list(v = v0, P = V0, B = B0, invO = invO0)
   
   # ----------------------------------------------------------------------------
   # create or unpack MCMC initialization
@@ -219,10 +223,15 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
     r = rep(1, TT)
     Gamma = diag(n - 1)
     gamma = numeric(n - 1)
+    beta = array(0, n)
   }
   
   Mu = matrix(0, TT, n)
   Sigma = gams2Sigma(Gamma, gamma)
+  
+  mu_beta = rep(0, n) 
+  Sigma_beta = diag(n)
+  Sigma_beta_inv = diag(n)
   
   # ----------------------------------------------------------------------------
   # preallocate storage
@@ -233,6 +242,13 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
   G_draws = array(numeric(p * p * ndraw), c(p, p, ndraw))
   W_draws = array(numeric(p * p * ndraw), c(p, p, ndraw))
   r_draws = matrix(0, TT, ndraw)
+  beta_draws = array(0, c(n, ndraw))
+  
+  
+  a = unitcircle2radians(U)
+  a_na_indices = which(is.na(a))
+  U_na_indices = which(is.na(U), arr.ind = TRUE)
+  #print(a_na_indices)
   
   # ----------------------------------------------------------------------------
   # off to war
@@ -248,6 +264,12 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
     
     Y = U * r
     
+    if (regress) {
+      for (i in 1:n) {
+        Y[,i] = Y[,i] + beta[i]*x
+      }
+    } 
+    
     model = SSModel(Y ~ -1 + SSMcustom(Z = FF,
                                        T = G,
                                        R = diag(p),
@@ -261,6 +283,29 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
     for (t in 1:TT){
       Mu[t, ] = FF[, , t] %*% S[t, ]
     }
+    
+    
+    for (t in a_na_indices) {
+      Y[t,] = FF[, , t] %*% S[t, ] + mvrnorm(n = 1, mu = numeric(p), Sigma)
+    }
+    
+    # --------------------------------------------------------------------------
+    # draw beta | ...
+    # --------------------------------------------------------------------------
+    if (regress) {
+      
+      synth_data = c(t(Y - Mu))
+      V = kronecker(x, diag(n)) # %x%
+      inv_O = diag(TT) %x% solve(Sigma) 
+      
+      Q = Sigma_beta_inv + t(V) %*% inv_O %*% V
+      Q_inv = solve(Q)
+      
+      ell = Sigma_beta_inv %*% mu_beta + t(V) %*% inv_O %*% (synth_data)
+      beta = mvrnorm(1,Q_inv %*% ell, Sigma= Q_inv)
+      
+    }
+    
     
     # --------------------------------------------------------------------------
     # draw from p(Sigma | ...)
@@ -293,10 +338,17 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
       W_draws[, , draw] = W
       r_draws[, draw] = r
       Sigma_draws[, , draw] = Sigma
+      if (regress) {
+        beta_draws[,draw] = beta
+      } 
     }
   }
   
-  draws = list(S = S_draws, r = r_draws, G = G_draws, W = W_draws, Sigma = Sigma_draws)
-  
+  if (!regress) {
+    draws = list(S = S_draws, r = r_draws, G = G_draws, W = W_draws, Sigma = Sigma_draws)
+  } else {
+    draws = list(S = S_draws, r = r_draws, G = G_draws, W = W_draws, Sigma = Sigma_draws, beta=beta_draws)
+  } 
   return(draws)
 }
+
