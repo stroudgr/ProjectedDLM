@@ -17,6 +17,8 @@ source("WindSpeed/models/2A/speed_pdlm_regression.R")
 source("WindSpeed/models/1B/speed_TVAR.R")
 source("WindSpeed/models/indep/indep.R")
 source("WindSpeed/models/model.R")
+source("WindSpeed/models/4A spline/spline_cond.R")
+source("WindSpeed/spline_gibbs.R")
 
 set.seed(8675309)
 
@@ -29,33 +31,48 @@ path = "WindSpeed/datasets/buffalo_airport/buffalo_wind_data_small_set.csv"
 
 speed_dir_data = read.csv(path)
 
-degrees = speed_dir_data[["wind_direction"]]
-x = speed_dir_data[["wind_speed"]]
-
-
-degrees = speed_dir_data[["drct"]]
-x = speed_dir_data[["sknt"]]
-
-logx = log(x+1)
-
-
-
 
 if (path == "WindSpeed/datasets/buffalo_airport/buffalo_wind_data_small_set.csv") {
-  period = 38 + 1:128
-  x = x[period]
-  degrees = degrees[period]
+  
+  degrees = speed_dir_data[["wind_direction"]]
+  x = speed_dir_data[["wind_speed"]]
+  
+  TT = length(x)
+  
+  
+  if (TT > 128) {
+    
+    period = 38 + 1:128
+    x = x[period]
+    degrees = degrees[period]
+  }
+  
+  logx = log(x+1)
+  a = degrees2radians(degrees)
+  U = radians2unitcircle(a)
 }
 
-a = degrees2radians(degrees)
+if (path == "WindSpeed/datasets/santa_ana_airport/santa_ana_rdata.csv") {
+  degrees = speed_dir_data[["drct"]]
+  x = speed_dir_data[["sknt"]]
+  TT = length(x)
+  a = degrees2radians(degrees)
+}
+
+plot(U[,1], type="l")
+plot(U[,2], type="l")
+
+plot(a, type="l", main="angle", xlab="Ten min increments", ylab = "angle (radians)")
+plot(x, type="l", main="Speed", xlab="Ten min increments", ylab = "angle")
+
 
 TT = length(x)
 
-buffalo_time_steps = c(29, 44, 53, 109, TT)
+buffalo_time_steps = c(29, 44, 53, 109, 128)
+santa_ana_time_steps = c(300, 1500, 2500, 3500, 5000)
 
-santa_ana_time_steps = c(300, 1500, 2500, 3500, 5000, TT)
-
-if (path == "WindSpeed/datasets/santa_ana_airport/santa_ana_rdata.csv") {
+library(imputeTS)
+if (TT == 8253) {
   
   x = na_interpolation(x)
   logx=log(x+1)
@@ -83,15 +100,21 @@ if (path == "WindSpeed/datasets/santa_ana_airport/santa_ana_rdata.csv") {
     abline(v = time_of_interest, col = "red", lty = 2, lwd = 2)
     dev.off()
   }
-  
+ 
+  logx = log(x+1)
+   
 }
 
-library(imputeTS)
+{
+plot(U[,1], type="l")
+}
+
+{
+  plot(U[,2], type="l")
+}
+
 
 if (path == "WindSpeed/datasets/buffalo_airport/buffalo_wind_data_small_set.csv") {
-  
- 
-  
   
   for (time_of_interest in buffalo_time_steps) {
   
@@ -115,38 +138,6 @@ if (path == "WindSpeed/datasets/buffalo_airport/buffalo_wind_data_small_set.csv"
     dev.off()
   }
 }
-# ==============================================================================
-# Graphing code
-# ==============================================================================
-
-replicate_plot = function (name, y, mu, postY, y_true = NULL, t01 = NULL, include_joint_bands = FALSE) 
-{
-  T = length(y)
-  if (is.null(t01)) 
-    t01 = seq(0, 1, length.out = T)
-  dcip = dcib = t(apply(postY, 2, quantile, c(0.05/2, 1 - 
-                                                0.05/2)))
-  if (include_joint_bands) 
-    dcib = credBands(postY)
-  dev.new()
-  par(mfrow = c(1, 1), mai = c(1, 1, 1, 1))
-  
-  plot(t01, y, type = "n", ylim = range(dcib, y, na.rm = TRUE), 
-       xlab = "t", ylab = expression(paste("angle"[t])), main = paste("Replicate point estimates (", name, ")"), 
-       cex.lab = 2, cex.main = 2, cex.axis = 2)
-  polygon(c(t01, rev(t01)), c(dcib[, 2], rev(dcib[, 1])), 
-          col = "gray50", border = NA)
-  polygon(c(t01, rev(t01)), c(dcip[, 2], rev(dcip[, 1])), 
-          col = "grey", border = NA)
-  if (!is.null(y_true)) 
-    lines(t01, y_true, lwd = 8, col = "black", lty = 6)
-  lines(t01, y, type = "p")
-  lines(t01, mu, lwd = 8, col = "cyan")
-}
-
-
-
-
 
 
 
@@ -155,9 +146,8 @@ replicate_plot = function (name, y, mu, postY, y_true = NULL, t01 = NULL, includ
 # Run models
 # ==============================================================================
 
-
-model_pretty_names = c("speed random walk + noise", "DLM", "speed RWN, direction PDLM + regression", "speed TVAR", "speed RWN, PDLM indep")
-model_names = c("speed_rw", "DLM", "speed_pdlm_regression", "speed_tvar", "independ")
+model_pretty_names = c("speed random walk + noise", "DLM", "speed RWN, direction PDLM + regression", "speed TVAR", "speed RWN, PDLM indep", "basis functions")
+model_names = c("speed_rw", "DLM", "speed_pdlm_regression", "speed_tvar", "independ", "basis")
 
 # TODO: I should want to delete these three lists. 
 post_samp_functions = c("speed_rw_posterior_samples", "dlm_posterior_samples", "speed_pdlm_regression_posterior_samples", "speed_tvar_posterior_samples")
@@ -165,7 +155,7 @@ points_est_functions = c("speed_rw_point_estimation", "dlm_point_estimation", "s
 forecast_samp_functions = c("speed_rw_forecast_samples", "dlm_forecasting", "speed_pdlm_regression_forecast_samples", "speed_tvar_forecast_samples")
 
 # 
-model_alphanumeric_identifiers = c("1A", "two_dlms", "2A", "1B", "3A")
+model_alphanumeric_identifiers = c("1A", "two_dlms", "2A", "1B", "3A", "4A")
 
 num_models = length(model_alphanumeric_identifiers)
 
@@ -228,6 +218,12 @@ post_samples4 = speed_tvar_posterior_samples(a, x, replicates = TRUE)
 post_samples5 = indep_posterior_samples(a,x, replicates=TRUE)
 post_samples_E = extra_posterior_samples(a,x, replicates=TRUE)
 
+post_samples6 = spline_posterior_samples(a, x, replicates=TRUE)
+
+
+
+
+
 
 
 points_estimation_1A = speed_rw_point_estimation(post_samples_1A)
@@ -238,16 +234,29 @@ points_estimation4 = speed_tvar_point_estimation(post_samples4)
 points_estimation5 = indep_point_estimation(post_samples5)
 points_estimation_E = extra_point_estimation(post_samples_E)
 
+points_estimation6 = spline_point_estimation(post_samples_6)
+
 
 custom_times = buffalo_time_steps
+custom_times = c(53, 109, TT)
+
 santa_ana_time_steps_fewer = c(300, 1500, 2500)
+santa_ana_time_steps_fewer_pt2 = c(3500, 5000)
 
 custom_times = santa_ana_time_steps_fewer
+custom_times = santa_ana_time_steps_fewer_pt2
+custom_times = santa_ana_time_steps
+
+custom_times = 50:TT
+
+custom_times = TT:TT
+
 
 start_time <- Sys.time()
 forecast_samples_1A = speed_rw_forecast_samples(x, a, custom_times = custom_times) 
 forecast_samples1 = forecast_samples_1A
 end_time <- Sys.time()
+#fs1
 
 time_taken <- end_time - start_time
 time_in_hours <- as.numeric(time_taken, units = "hours")
@@ -261,6 +270,11 @@ forecast_samples4 = speed_tvar_forecast_samples(x, a, custom_times = custom_time
 forecast_samples5 = indep_forecast_samples(x,a, custom_times = custom_times)
 forecast_samples_E = extra_forecast_samples(x,a, custom_times = custom_times)
 
+forecast_samples6 = spline_forecast_samples(x,a, custom_times = custom_times)
+
+
+
+
 
 ahead_forecast_samples_1A = speed_rw_forecast_ahead_samples(x,a, h=10)
 ahead_forecast_samples1 = ahead_forecast_samples_1A 
@@ -270,9 +284,13 @@ ahead_forecast_samples4 = speed_tvar_forecast_ahead_samples(x, a, h=10)
 ahead_forecast_samples5 = indep_forecast_ahead_samples(x, a, h=10)
 ahead_forecast_samples_E = extra_forecast_ahead_samples(x,a,h=1)
 
+
+
+
 #post_samples_list = list(post_samples1, post_samples2, post_samples3)
 #points_estimation_list = list(points_estimation1, points_estimation2, points_estimation3)
 #forecast_samples_list = list(forecast_samples1, forecast_samples2, forecast_samples3)
+
 
 
 

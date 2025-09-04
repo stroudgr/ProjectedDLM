@@ -1,16 +1,12 @@
 library(ggplot2)
 
 logx = log(x+1)
-m=1
+m=6
 #post_samples = post_samples5
 #points_forecasts = points_estimation2
-forecast_samples = forecast_samples1
+forecast_samples = forecast_samples6
 #ahead_forecast_samples = ahead_forecast_samples5
 
-
-
-a_med = points_forecasts$a_med
-a_rep = post_samples$a_rep
 
 p_max=1
 
