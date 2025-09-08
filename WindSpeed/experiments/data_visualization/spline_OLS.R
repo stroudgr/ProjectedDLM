@@ -23,16 +23,16 @@ design_matrix <- generate_design_matrix(degree = 3, knot_vector = c(10,20, 30), 
 
 
 mod_spline <- lm(a~design_matrix)
-mod_spline <- lm(U~design_matrix)
+#mod_spline <- lm(U~design_matrix)
 
 prediction = predict(mod_spline)
 prediction
 
-if (dim(prediction)[2] == 2) {
-  a_pred = unitcircle2radians(prediction)
-} else {
+#if (dim(prediction)[2] == 2) {
+#  a_pred = unitcircle2radians(prediction)
+#} else {
   a_pred = prediction
-}
+#}
 library(ggplot2)
 
 ggplot() +
