@@ -1,4 +1,3 @@
-
 source("WindSpeed/initialization.R")
 
 load_dataset = function(dataset, impute=TRUE) {

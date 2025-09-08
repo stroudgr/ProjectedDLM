@@ -1,3 +1,15 @@
+source("WindSpeed/models/1A/speed_rw.R")
+source("WindSpeed/models/dlm/DLM.R")
+source("WindSpeed/models/2A/speed_pdlm_regression.R")
+source("WindSpeed/models/1B/speed_TVAR.R")
+source("WindSpeed/models/indep/indep.R")
+source("WindSpeed/models/model.R")
+source("WindSpeed/models/4A spline/spline_cond.R")
+source("WindSpeed/spline_gibbs.R")
+
+
+
+
 # S3 classes
 # Model interface
 

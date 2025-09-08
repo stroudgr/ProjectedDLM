@@ -5,7 +5,7 @@ library(tvReg)
 library(rstan)
 
 # Prereq: a should be radians.
-speed_rw_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}) {
+speed_rw_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, verbose=FALSE, stan_output = TRUE) {
   
   TT = length(x)
   n = 2
@@ -44,7 +44,7 @@ speed_rw_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtrans
   
   
   # Sample from the posterior
-  fit <- sampling(speed_model, data = data_list, chains = 4, iter = ndraw, warmup = round(ndraw/2), seed = 42)
+  fit <- sampling(speed_model, data = data_list, chains = 4, iter = ndraw, warmup = round(ndraw/2), seed = 42, verbose=stan_output)
   posterior <- rstan::extract(fit)
   
   sigma_w_samples <- posterior$sigma_w

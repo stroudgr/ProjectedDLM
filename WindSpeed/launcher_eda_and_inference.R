@@ -24,10 +24,10 @@
 
 #set.seed(8675309)
 
+source("_packages.R")
 source("helpers/_helpers.R")
-source("WindSpeed/experiments/data_visualization/Wind_Speed_eda.R")
-
-
+source("WindSpeed/_helpers.R")
+#
 
 
 
@@ -35,11 +35,11 @@ source("WindSpeed/experiments/data_visualization/Wind_Speed_eda.R")
 # Experiment 1
 # ------------------------------------------------------------------------------
 local({
-# The experiment is Data visualization: all subexperiments (Should be fast to run all at once)
-datasets = list("buffalo", "santa_ana")
-
-params = list(impute = TRUE)
-create_dataset_figures(datasets, params)
+  # The experiment is Data visualization: all subexperiments (Should be fast to run all at once)
+  datasets = list("buffalo", "santa_ana")
+  
+  params = list(impute = TRUE)
+  create_dataset_figures(datasets, params)
 })
 
 
@@ -53,14 +53,21 @@ create_dataset_figures(datasets, params)
 # The experiment is Model inference: posterior sampling
 local({
 
-# params should include:
-# - save diagnostics or not 
-# - whether to include Stan output
-#        -> Eg: fit <- stan(model_code = "...", data = "...", refresh = 0) 
-# - May as well always save posterior samples.
-# - General progress output: Y/N
-params = list()
-run_MCMC(models, datasets, params) 
+  # params should include:
+  # - save diagnostics or not 
+  # - whether to include Stan output
+  #        -> Eg: fit <- stan(model_code = "...", data = "...", refresh = 0) 
+  # - May as well always save posterior samples.
+  # - General progress output: Y/N
+  params = list(verbose = TRUE, stan_output=FALSE)
+  
+  models = list("1A", "2A", "3A", "4A", "dlm")
+  datasets = list("buffalo", "santa_ana")
+  
+  models = list("1A")
+  datasets = list("buffalo")
+  
+  run_MCMC(models, datasets, params) 
                                    
 })
 
@@ -78,29 +85,6 @@ local({
   # - For how long do I forecast for?
   
   forecast_samples(models, datasets, params)
-})
-
-
-
-# ------------------------------------------------------------------------------
-# Experiment 4
-# ------------------------------------------------------------------------------
-# The experiment is data visualization: basis OLS visualization
-local({
-  # Visualize what the OLS solution looks like for the provided basis.
-  
-  # TODO should this just be in #1? Probably, although we probably want to easily make some diff choices
-  # of what the basis could/should be.
-  
-  # TODO params?
-  params = list()
-  
-  # Lengths should match
-  basis_choice_names = list()
-  basis_choice = list()
-  
-  forecast_samples(models, datasets, params)
-
 })
 
 
