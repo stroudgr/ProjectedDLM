@@ -24,9 +24,9 @@
 
 #set.seed(8675309)
 
-
+source("helpers/_helpers.R")
 source("WindSpeed/experiments/data_visualization/Wind_Speed_eda.R")
-
+library(imputeTS)
 # ------------------------------------------------------------------------------
 # Experiment 1
 # ------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ local({
 # The experiment is Data visualization: all subexperiments (Should be fast to run all at once)
 datasets = list("buffalo", "santa_ana")
 
-params = list(impute_missing = TRUE)
+params = list(impute = TRUE)
 create_dataset_figures(datasets, params)
 })
 
