@@ -59,13 +59,15 @@ local({
   #        -> Eg: fit <- stan(model_code = "...", data = "...", refresh = 0) 
   # - May as well always save posterior samples.
   # - General progress output: Y/N
-  params = list(verbose = TRUE, stan_output=FALSE, diagnostics = TRUE)
+  params = list(verbose = TRUE, stan_output=FALSE, diagnostics = TRUE, impute = TRUE, end_times = list(santa_ana = 200))
   
   models = list("1A", "2A", "3A", "4A", "dlm")
   datasets = list("buffalo", "santa_ana")
   
-  models = list("1A")
-  datasets = list("buffalo")
+  #models = list("4A", "dlm")
+  datasets = list("santa_ana")
+  
+  models = list("dlm")
   
   run_MCMC(models, datasets, params) 
                                    

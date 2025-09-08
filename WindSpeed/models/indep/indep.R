@@ -87,12 +87,13 @@ indep_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransfor
   # Fit U|X model
   # ==============================================================================
   
+  speed_post_samples = list(psi = s_samples, sigma_sq = sigma_e_samples)
   
   # MCMC params
   pdlm_burn = 1000
   pdlm_thin = 1
   #pdlm_draws = gibbs_pdlm_basic(U, FF, V, G, W, s1, P1, r0, ndraw, pdlm_burn, pdlm_thin)
-  pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin)
+  pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, logx=log(x+1),speed_model="A", miss_speed_post=speed_rw_noise_miss_full_posterior_helper, speed_post_samples= speed_post_samples)
   
   
   

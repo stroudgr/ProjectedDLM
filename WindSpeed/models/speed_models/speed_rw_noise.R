@@ -9,7 +9,7 @@ speed_rw_noise_miss_full_posterior_helper = function(y, logx, s, psi, Sigma_inv,
   T_miss = length(miss_indices)
   i=1
   
-  print(s[4,])
+  #print(s[4,])
   
   for( t in miss_indices) {
     Q_inv[i] = 1 / (t(s[t,]) %*% Sigma_inv %*% s[t,] + 1/sigma_sq)

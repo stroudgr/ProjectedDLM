@@ -2,7 +2,7 @@ gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, nd
   # ----------------------------------------------------------------------------
   # dimensions
   # ----------------------------------------------------------------------------
-  
+  logx = log(x+1)
   TT = nrow(U)
   n = ncol(U)
 

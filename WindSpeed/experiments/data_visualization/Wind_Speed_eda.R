@@ -7,13 +7,13 @@ create_dataset_figures = function(datasets, params){
   
   impute = list()
   
-  if (!("impute" %in% params)){
+  if (!("impute" %in% names(params))){
     params["impute"] = TRUE
   }
   
   if (params[["impute"]] == TRUE | params[["impute"]] == FALSE) {
     for (dataset in datasets) {
-      impute[dataset] = params["impute"] 
+      impute[dataset] = params[["impute"]]
     }
   } else { # If I pass in a custom list to specify for each dataset.
     impute = params["impute"] 

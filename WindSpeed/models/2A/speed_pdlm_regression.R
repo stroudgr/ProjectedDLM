@@ -95,10 +95,11 @@ speed_pdlm_regression_posterior_samples = function(a, x, ndraw=1000, replicates=
   pdlm_burn = 1000
   pdlm_thin = 1
 
+  speed_post_samples = list(psi = s_samples, sigma_sq = sigma_e_samples)
 
   #pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress=FALSE, x=logx)
   
-  pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress=TRUE, x=log(x+1))
+  pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress=TRUE, logx=log(x+1), speed_model = "A", miss_speed_post=speed_rw_noise_miss_full_posterior_helper, speed_post_samples= speed_post_samples)
 
   # ==============================================================================
   # Posterior predictive (replicate) draws
