@@ -1,5 +1,22 @@
-speed_tvar_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}) {
+speed_tvar_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, params) {
 
+  verbose = FALSE
+  stan_output = TRUE
+  diagnostics = FALSE  
+  
+  if (params[["verbose"]]) {
+    verbose = TRUE
+  }
+  
+  if (params[["stan_output"]] == FALSE) {
+    stan_output = FALSE
+  }
+  
+  if (params[["diagnostics"]]) {
+    diagnostics = TRUE
+  }
+  
+  
   TT = length(x)
   n = 2
   p = 2
@@ -32,8 +49,10 @@ speed_tvar_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtra
     H = 1
   )
 
+  refresh = ifelse(stan_output, max(ndraw/10, 1), 0)
+  
   # Sample from the posterior
-  fit <- sampling(model, data = data_list, chains = 4, iter = ndraw, warmup = round(ndraw/2), seed = 42)
+  fit <- sampling(model, data = data_list, chains = 4, iter = ndraw, warmup = round(ndraw/2), seed = 42, refresh=refresh)
   
   posterior <- rstan::extract(fit)
   

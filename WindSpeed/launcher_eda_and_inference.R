@@ -59,7 +59,7 @@ local({
   #        -> Eg: fit <- stan(model_code = "...", data = "...", refresh = 0) 
   # - May as well always save posterior samples.
   # - General progress output: Y/N
-  params = list(verbose = TRUE, stan_output=FALSE)
+  params = list(verbose = TRUE, stan_output=FALSE, diagnostics = TRUE)
   
   models = list("1A", "2A", "3A", "4A", "dlm")
   datasets = list("buffalo", "santa_ana")

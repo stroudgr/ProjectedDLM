@@ -1,6 +1,24 @@
 
-dlm_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform = function(x){log(x+1)}) {
+dlm_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform = function(x){log(x+1)}, params) {
 
+  
+  verbose = FALSE
+  stan_output = TRUE
+  diagnostics = FALSE  
+  
+  if (params[["verbose"]]) {
+    verbose = TRUE
+  }
+  
+  if (params[["stan_output"]] == FALSE) {
+    stan_output = FALSE
+  }
+  
+  if (params[["diagnostics"]]) {
+    diagnostics = TRUE
+  }
+  
+  
   logx = xtransform(x)
   TT = length(x)
   n = 2
@@ -23,8 +41,9 @@ dlm_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform 
   # Compile the model
   model <- stan_model("WindSpeed/models/dlm/speed_dlm.stan")
 
+  refresh = ifelse(stan_output, max(ndraw/10, 1), 0)
   # Sample from the posterior
-  fit <- sampling(model, data = data_list, chains = 4, iter = ndraw, warmup = round(ndraw/2), seed = 42)
+  fit <- sampling(model, data = data_list, chains = 4, iter = ndraw, warmup = round(ndraw/2), seed = 42, refresh=refresh)
   
   posterior <- rstan::extract(fit)
 

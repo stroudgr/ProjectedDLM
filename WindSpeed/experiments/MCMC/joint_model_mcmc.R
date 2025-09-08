@@ -59,6 +59,12 @@ run_MCMC = function(models, datasets, params) {
     # TODO check validity of above. Add to helpers.R?
   }
   
+  diagnostics = FALSE
+  if (params[["diagnostics"]]) {
+    diagnostics = TRUE
+  }
+  
+  
   
   for (dataset in datasets) {
     
@@ -73,25 +79,31 @@ run_MCMC = function(models, datasets, params) {
       
       folder_name = paste0(root_path, "/", model, "/post_samples/", dataset, "/")
       
+      # TODO
+      MCMC_params = list(diagnostics = diagnostics, verbose=verbose, stan_output=FALSE)
+      
+      if (verbose)
+        cat(paste0("Running model ", model, " on dataset ", dataset , " \n"))
+      
       if (model == "1A") {
         #TODO get rid of hardcoded stan_output
-        post_samples = speed_rw_posterior_samples(a, x, replicates = TRUE, verbose=verbose, stan_output=FALSE)
+        post_samples = speed_rw_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
         
       } else if (model == "1B") {
         
-        post_samples = speed_tvar_posterior_samples(a, x, replicates = TRUE)
+        post_samples = speed_tvar_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
         
       } else if (model == "2A") {
-        speed_pdlm_regression_posterior_samples(a, x, replicates = TRUE)
+        speed_pdlm_regression_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
         
       } else if (model == "3A") {
-        post_samples = indep_posterior_samples(a,x, replicates=TRUE)
+        post_samples = indep_posterior_samples(a,x, replicates=TRUE, params=MCMC_params)
         
       } else if (model == "4A") {
-        post_samples = spline_posterior_samples(a, x, replicates=TRUE)
+        post_samples = spline_posterior_samples(a, x, replicates=TRUE, params=MCMC_params)
         
       } else if (model == "dlm") { 
-        post_samples = dlm_posterior_samples(a, x, replicates = TRUE)
+        post_samples = dlm_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
       
       } else {
         stop("No model of name ", model  , " found, might still need to be implemented.")
@@ -108,3 +120,6 @@ run_MCMC = function(models, datasets, params) {
   }
   
 }
+
+
+
