@@ -35,12 +35,12 @@ gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, nd
   
   orthogonalizer = diag(1, nrow = TT) - proj_BX
   
-  proj_BX_list = array(0, dim=c(TT, L,L))
+  #proj_BX_list = array(0, dim=c(TT, L,L))
   
-  for (t in 1:TT) {
+  #for (t in 1:TT) {
     # OR outerproduct in solve(...)
-    proj_BX_list[t,,] = BX[t,] %*% solve(t(BX[t,])  %*% BX[t,] ) %*% t(BX[t,])
-  }
+  #  proj_BX_list[t,,] = BX[t,] %*% solve(t(BX[t,])  %*% BX[t,] ) %*% t(BX[t,])
+  #}
   
   if(is.null(prior)){
     s1 = numeric(p)

@@ -75,7 +75,7 @@ run_MCMC = function(models, datasets, params) {
     cat("Running with the following params: \n")
     cat(paste0("diagnostics=", diagnostics, "\n"))
     cat(paste0("impute=", impute, "\n"))
-    cat(paste0("rerun=", rerurn, "\n"))
+    cat(paste0("rerun=", rerun, "\n"))
   }
   
   
@@ -120,7 +120,7 @@ run_MCMC = function(models, datasets, params) {
       }
       
       if (verbose) {
-        cat(paste0("Running model ", model, " on dataset ", dataset, "[1:", TT, "] \n"))
+        cat(paste0("Running model ", model, " on dataset ", dataset, "[1:", end_time, "] \n"))
       }
       
       if (model == "1A") {
@@ -158,4 +158,86 @@ run_MCMC = function(models, datasets, params) {
 }
 
 
+
+
+forecast_samples_lazy_way = function(models, datasets, params) {
+  
+  forecast_samples = speed_rw_forecast_samples(x, a, custom_times = custom_times) 
+  forecast_samples = dlm_forecasting(x, a, custom_times = custom_times) 
+  forecast_samples = speed_pdlm_regression_forecast_samples(x, a, custom_times = custom_times) 
+  forecast_samples = indep_forecast_samples(x,a, custom_times = custom_times)
+  
+  forecast_samples = spline_forecast_samples(x,a, custom_times = custom_times)
+  
+  
+  
+}
+
+
+forecast_samples = function(models, datasets, params){
+  
+  root_path = "WindSpeed/experiments/MCMC/saved_MCMC/"
+  
+  for (dataset in datasets) {
+    
+    params_copy = params
+    
+    start = params[["time_range"]][1]
+    end = params[["time_range"]][2]
+    
+    for (t in start:end) {
+      end_time = list(t)
+      names(end_time) <- c(dataset)
+      
+      params_copy[["end_times"]] = end_time
+      
+      run_MCMC(models, list(dataset), params_copy)
+      
+      for (model in models) {
+        
+        folder_name = paste0(root_path, "/", model, "/post_samples/", dataset, "/")
+        
+        save_path = ifelse((t == TT), "post", paste0("post_Time_", t) )
+        save_path = paste0(folder_name, save_path ,".Rdata")
+        
+        post_samples
+        
+        if (model == "1A") {
+          
+        } else if (model == "1B") {
+          
+          post_samples = speed_tvar_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
+          
+        } else if (model == "2A") {
+          post_samples = speed_pdlm_regression_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
+          
+        } else if (model == "3A") {
+          post_samples = indep_posterior_samples(a,x, replicates=TRUE, params=MCMC_params)
+          
+        } else if (model == "4A") {
+          post_samples = spline_posterior_samples(a, x, replicates=TRUE, params=MCMC_params)
+          
+        } else if (model == "dlm") { 
+          post_samples = dlm_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
+          
+        } else {
+          stop("No model of name ", model  , " found, might still need to be implemented.")
+        }
+        
+        save(post_samples, file = save_path)
+        
+        
+        
+      }
+      
+      
+      post_samples = get(load())
+    }
+    
+  }
+  
+  
+  
+  
+}
 

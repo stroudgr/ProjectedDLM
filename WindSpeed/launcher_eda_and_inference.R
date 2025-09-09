@@ -1,33 +1,6 @@
-# ==============================================================================
-# Load dataset.
-# ==============================================================================
-
-
-#rm(list = ls())
-
-# source("_packages.R")
-# source("helpers/_helpers.R")
-# 
-# library(Rfast)
-# library(tvReg)
-# library(rstan)
-
-# source("WindSpeed/models/1A/speed_rw.R")
-# source("WindSpeed/models/dlm/DLM.R")
-# source("WindSpeed/models/2A/speed_pdlm_regression.R")
-# source("WindSpeed/models/1B/speed_TVAR.R")
-# source("WindSpeed/models/indep/indep.R")
-# source("WindSpeed/models/model.R")
-# source("WindSpeed/models/4A spline/spline_cond.R")
-# source("WindSpeed/spline_gibbs.R")
-# source("WindSpeed/launch_experiment.R")
-
-#set.seed(8675309)
-
 source("_packages.R")
 source("helpers/_helpers.R")
 source("WindSpeed/_helpers.R")
-#
 
 RUN_EXPERIMENT_1 = FALSE
 RUN_EXPERIMENT_2 = TRUE
@@ -64,19 +37,16 @@ local({
   #        -> Eg: fit <- stan(model_code = "...", data = "...", refresh = 0) 
   # - May as well always save posterior samples.
   # - General progress output: Y/N
-  params = list(verbose = TRUE, stan_output=FALSE, diagnostics = TRUE, impute = TRUE, end_times = list(santa_ana=10))
+  params = list(verbose = TRUE, stan_output=FALSE, diagnostics = TRUE)
+  params["impute"] = TRUE
+  params[["end_times"]] = list()
   params["rerun"] = FALSE
   
   
   models = list("1A", "2A", "3A", "4A", "dlm")
+  datasets = list("santa_ana")
   
-  datasets = list("buffalo", "santa_ana")
-  datasets = list("buffalo")
-  
-  models = list("1A")
-  
-  #start_time <- Sys.time()
-  
+  models = list("4A")
   
   run_MCMC(models, datasets, params) 
   
@@ -101,6 +71,11 @@ local({
 if (RUN_EXPERIMENT_3) {
 local({
   params = list()
+  params[["time_range"]] = list(buffalo=c(50, -1), santa_ana = c(1200,1210))
+  params["impute"] = TRUE
+  params["rerun"] = FALSE
+  params["verbose"] = FALSE
+  params["stan_output"] = FALSE
   
   # Params should include:
   # - For what subinterval of data am I experimenting on?
@@ -108,6 +83,7 @@ local({
   # - For how long do I forecast for?
   
   forecast_samples(models, datasets, params)
+  
 })
 }
 

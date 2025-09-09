@@ -1,3 +1,6 @@
+source("_packages.R")
+source("helpers/_helpers.R")
+source("WindSpeed/_helpers.R")
 
 
 # ------------------------------------------------------------------------------
@@ -9,24 +12,29 @@ local(
 # For models that take the form y_t = s_t + f(x_t) + noise
 #                           or  y_t = s_t*beta_t + noise
 # we want to visualize the time dependent latent state variables.
+# First, we plot posteriors of each coordinate of s_t over time with credible intervals.
 
 # params should include
 # - Whether to runMCMC if there is no saved data (shouldn't be any issue).
-# - Mandatory param: Which states to create visuals for.
+# - Mandatory param: Which states to create visuals for. TODO this is for histograms. Separate?
 # - Anything else?
-  
-models = list()
+
+models = list("1A", "2A", "3A", "4A")
 datasets = list("buffalo", "santa_ana")
+datasets = list("buffalo")
 
 buffalo_list = c(4,5,6)
 santa_ana_list = c(7,8,9) #change these
 
 
-states_list = list(buffalo_list, santa_ana_list)
+states_list = list(buffalo=buffalo_list, santa_ana=santa_ana_list)
 params = list(runMCMC = FALSE)
 
-visualize_states(models, datasets, states_list=states_list, params=params)
-  
+visualize_states(models, datasets, params=params)
+
+# TODO implement!
+#visualize_state_histograms(models, datasets, state_list, params=params)
+
 }
 )
 

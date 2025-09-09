@@ -10,3 +10,6 @@ source("WindSpeed/helpers.R")
 
 
 source("WindSpeed/experiments/MCMC/joint_model_mcmc.R")
+
+
+source("WindSpeed/experiments/model_visualization/model_visualization.R")

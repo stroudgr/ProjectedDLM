@@ -25,6 +25,25 @@ get_index_by_name = function(name) {
   return(all_indices[[name]])
 }
 
+model_pretty_names = c("speed random walk + noise", "DLM", "speed RWN, direction PDLM + regression", "speed TVAR", "speed RWN, PDLM indep", "basis functions")
+model_names = c("speed_rw", "DLM", "speed_pdlm_regression", "speed_tvar", "independ", "basis")
+
+model_alphanumeric_identifiers = c("1A", "two_dlms", "2A", "1B", "3A", "4A")
+
+model_indices = list("1A" = 1, "two_dlms"=2, "2A"=3, "1B"=4, "3A"=5, "4A"=6)
+
+
+num_models = length(model_alphanumeric_identifiers)
+
+
+
+
+
+
+
+
+
+
 
 
 valid_datasets = function(datasets, print_output=TRUE) {
