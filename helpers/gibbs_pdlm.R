@@ -178,10 +178,12 @@ gibbs_pdlm_intermediate <- function(U, FF, V, priorparams, init, ndraw, burn, th
 # ==============================================================================
 # ==============================================================================
 
-gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, regress=FALSE, x=NULL){
+gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, regress=FALSE, logx, speed_model, miss_speed_post=NA, speed_post_samples = NA, verbose=FALSE){
   # ----------------------------------------------------------------------------
   # dimensions
   # ----------------------------------------------------------------------------
+  
+  x = exp(logx)-1
   
   TT = nrow(U)
   n = ncol(U)
@@ -248,6 +250,23 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
   a = unitcircle2radians(U)
   a_na_indices = which(is.na(a))
   U_na_indices = which(is.na(U), arr.ind = TRUE)
+  
+  logx_na_indices = NA
+  
+  psi_draws = NA
+  sigma_sq = NA
+  
+  if (!is.null(logx)) {
+    logx_na_indices = which(is.na(logx))
+    logx_not_na_indices = which(!is.na(logx))
+    
+    
+    if (speed_model == "A") {
+      psi_draws = speed_post_samples$psi
+      sigma_sq = speed_post_samples$sigma_sq
+    }
+  }
+  
   #print(a_na_indices)
   
   # ----------------------------------------------------------------------------
@@ -255,6 +274,12 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
   # ----------------------------------------------------------------------------
   
   draw = 0
+  
+  nn = 51
+  kk = 25
+  
+  idx = round(seq(1,n, length.out = 25))
+  
   
   for (m in 1:M) {
     
@@ -288,6 +313,15 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
     for (t in a_na_indices) {
       Y[t,] = FF[, , t] %*% S[t, ] + mvrnorm(n = 1, mu = numeric(p), Sigma)
     }
+    #Y[a_na_indices, ] = FF[, , a_na_indices] %*% S[a_na_indices, ] + mvrnorm(n = length(a_na_indices), mu = numeric(p), Sigma)
+    
+    for (t in logx_na_indices) {
+      if (speed_model == "A") {
+        logx = speed_rw_noise_miss_full_posterior_helper(Y, logx, S, psi_draws, solve(Sigma), sigma_sq, logx_not_na_indices, logx_na_indices)
+      }
+    }
+    
+    
     
     # --------------------------------------------------------------------------
     # draw beta | ...
@@ -295,7 +329,7 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
     if (regress) {
       
       synth_data = c(t(Y - Mu))
-      V = kronecker(x, diag(n)) # %x%
+      V = kronecker(logx, diag(n)) # %x%
       inv_O = diag(TT) %x% solve(Sigma) 
       
       Q = Sigma_beta_inv + t(V) %*% inv_O %*% V

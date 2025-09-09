@@ -67,7 +67,7 @@ run_MCMC = function(models, datasets, params) {
     diagnostics = TRUE
   }
   
-  if (diagnostics) {
+  if (verbose) {
     cat("Running with the following params: \n")
     cat(paste0("diagnostics=", diagnostics, "\n"))
     cat(paste0("impute=", impute, "\n"))
@@ -80,17 +80,18 @@ run_MCMC = function(models, datasets, params) {
       data = load_dataset(dataset, impute[[dataset]])
       a = data$a
       x = data$x
+      TT = length(x)
       
       # If no entry in end_times
-      if (!(dataset %in% end_times)){
-        end_times[dataset] = length(x)
+      if (!(dataset %in% names(end_times))){
+        end_times[dataset] = TT
       }
       
       # If entry in end_times, only looks at data up to this time.
       # Beneficial for model testing and testing runtime as function of data length.
-      TT = end_times[[dataset]]
-      x = x[1:TT]
-      a = a[1:TT]
+      end_time = end_times[[dataset]]
+      x = x[1:end_time]
+      a = a[1:end_time]
       
     }
     
@@ -129,7 +130,7 @@ run_MCMC = function(models, datasets, params) {
         stop("No model of name ", model  , " found, might still need to be implemented.")
       }
       
-      if (dataset %in% end_times) {
+      if (end_times[[dataset]] == TT) {
         save(post_samples, file = paste0(folder_name, "post.Rdata"))
       } else {
         save(post_samples, file = paste0(folder_name, "post_Time_", end_times[[dataset]], ".Rdata"))
