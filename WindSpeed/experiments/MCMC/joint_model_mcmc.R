@@ -42,8 +42,6 @@ run_MCMC = function(models, datasets, params) {
     end_times = params[["end_times"]]
   }
   
-  
-  
   #TODO make this impute thing a function
   impute = list()
   
@@ -67,10 +65,17 @@ run_MCMC = function(models, datasets, params) {
     diagnostics = TRUE
   }
   
+  rerun = FALSE 
+  if (params[["rerun"]]) {
+    rerun = TRUE
+  }
+  
+  
   if (verbose) {
     cat("Running with the following params: \n")
     cat(paste0("diagnostics=", diagnostics, "\n"))
     cat(paste0("impute=", impute, "\n"))
+    cat(paste0("rerun=", rerurn, "\n"))
   }
   
   
@@ -100,12 +105,24 @@ run_MCMC = function(models, datasets, params) {
       
       folder_name = paste0(root_path, "/", model, "/post_samples/", dataset, "/")
       
-      # TODO
+      # TODO Don't always suppress Stan output.
       MCMC_params = list(diagnostics = diagnostics, verbose=verbose, stan_output=FALSE)
+      
+      save_path = ifelse((end_times[[dataset]] == TT), "post", paste0("post_Time_", end_times[[dataset]]) )
+      save_path = paste0(folder_name, save_path ,".Rdata")
+      
+      if (!rerun & file.exists(save_path)) {
+        # post_samples = get(load(save_path))
+        if (verbose){
+          cat(paste0("Found saved data for ", model, " on dataset ", dataset, "[1:", TT, "] \n"))
+        }
+        next
+      }
       
       if (verbose) {
         cat(paste0("Running model ", model, " on dataset ", dataset, "[1:", TT, "] \n"))
       }
+      
       if (model == "1A") {
         #TODO get rid of hardcoded stan_output
         post_samples = speed_rw_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
@@ -130,11 +147,9 @@ run_MCMC = function(models, datasets, params) {
         stop("No model of name ", model  , " found, might still need to be implemented.")
       }
       
-      if (end_times[[dataset]] == TT) {
-        save(post_samples, file = paste0(folder_name, "post.Rdata"))
-      } else {
-        save(post_samples, file = paste0(folder_name, "post_Time_", end_times[[dataset]], ".Rdata"))
-      }
+      save(post_samples, file = save_path)
+     
+      
       
     }
   
