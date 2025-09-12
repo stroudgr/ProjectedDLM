@@ -27,3 +27,10 @@ source("WindSpeed/experiments/model_visualization/model_visualization.R")
 # 
 source("WindSpeed/experiments/model_testing/model_testing.R")
 source("WindSpeed/experiments/model_testing/model_comparison.R")
+
+
+
+
+
+#TODO not here
+source("WindSpeed/models/speed_models/speed_rw_noise.R")

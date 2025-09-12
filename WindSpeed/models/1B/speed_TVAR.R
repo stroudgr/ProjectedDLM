@@ -72,7 +72,8 @@ speed_tvar_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtra
   
   #pdlm_draws = gibbs_pdlm_basic(U, FF, V, G, W, s1, P1, r0, ndraw, pdlm_burn, pdlm_thin)
   
-  pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin)
+  params = list()
+  pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, params=list())
 
 
   if(!replicates) {
@@ -220,8 +221,8 @@ speed_tvar_forecast_samples = function(x,a, ndraw=1000, xtransform = function(x)
     
     s_samples <- posterior$s
   
-    
-    pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin)
+    params = list()
+    pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, params=params)
     
     G_draws = pdlm_draws$G
     W_draws = pdlm_draws$W

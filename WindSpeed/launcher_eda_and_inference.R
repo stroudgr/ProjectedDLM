@@ -1,10 +1,11 @@
 source("_packages.R")
+source("WindSpeed/_packages.R")
 source("helpers/_helpers.R")
 source("WindSpeed/_helpers.R")
 
 RUN_EXPERIMENT_1 = FALSE
-RUN_EXPERIMENT_2 = TRUE
-RUN_EXPERIMENT_3 = FALSE
+RUN_EXPERIMENT_2 = FALSE
+RUN_EXPERIMENT_3 = TRUE
 
 # ------------------------------------------------------------------------------
 # Experiment 1
@@ -40,16 +41,11 @@ local({
   params = list(verbose = TRUE, stan_output=FALSE, diagnostics = TRUE)
   params["impute"] = TRUE
   params[["end_times"]] = list()
-  params["rerun"] = FALSE
+  params["rerun"] = TRUE
   
   
   models = list("1A", "2A", "3A", "4A", "dlm")
   datasets = list("santa_ana")
-  
-  datasets = list("buffalo")
-  
-  models = list("4A")
-  models = list("4Aii")
   
   run_MCMC(models, datasets, params) 
   
@@ -93,7 +89,6 @@ local({
   
   datasets = list("buffalo")
   models = list("1A", "2A", "3A", "4A", "dlm")
-  models = list("4Aii")
   
   forecast_samples(models, datasets, params)
   

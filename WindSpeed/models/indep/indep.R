@@ -93,7 +93,13 @@ indep_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransfor
   pdlm_burn = 1000
   pdlm_thin = 1
   #pdlm_draws = gibbs_pdlm_basic(U, FF, V, G, W, s1, P1, r0, ndraw, pdlm_burn, pdlm_thin)
-  pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, logx=log(x+1),speed_model="A", miss_speed_post=speed_rw_noise_miss_full_posterior_helper, speed_post_samples= speed_post_samples)
+  
+  
+  params = list(speed_model="A", 
+                miss_speed_post=speed_rw_noise_miss_full_posterior_helper, 
+                speed_post_samples= speed_post_samples)
+  
+  pdlm_draws = gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, logx=log(x+1))
   
   
   
@@ -235,7 +241,11 @@ indep_forecast_samples = function(x,a, ndraw=1000, xtransform=function(x){log(x+
     pdlm_burn = 1000
     pdlm_thin = 1
     #pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin)
-    pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, logx=logx, speed_model, miss_speed_post=NA, speed_post_samples = NA, verbose=FALSE)
+    params = list(speed_model="NA", 
+                  miss_speed_post=NA, 
+                  speed_post_samples = NA, 
+                  verbose=FALSE)
+    pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, logx=logx, params=params)
     
     
     
@@ -330,7 +340,10 @@ indep_forecast_ahead_samples = function(x,a, ndraw=1000, xtransform=function(x){
   
   pdlm_burn = 1000
   pdlm_thin = 1
-  pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin)
+  
+  params = list()
+  
+  pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, params = params)
   
   #forecast_G_draws[t,,,] = pdlm_draws$G
   G_draws = pdlm_draws$G

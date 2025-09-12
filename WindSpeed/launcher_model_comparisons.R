@@ -1,3 +1,8 @@
+source("_packages.R")
+source("WindSpeed/_packages.R")
+source("helpers/_helpers.R")
+source("WindSpeed/_helpers.R")
+
 # ------------------------------------------------------------------------------
 # Experiment 
 # ------------------------------------------------------------------------------

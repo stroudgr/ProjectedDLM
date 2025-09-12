@@ -178,10 +178,58 @@ gibbs_pdlm_intermediate <- function(U, FF, V, priorparams, init, ndraw, burn, th
 # ==============================================================================
 # ==============================================================================
 
-gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, regress=FALSE, logx, speed_model="NA", miss_speed_post=NA, speed_post_samples = NA, verbose=FALSE, spatial_confound=FALSE){
-  # ----------------------------------------------------------------------------
-  # dimensions
-  # ----------------------------------------------------------------------------
+gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, regress=FALSE, logx=NULL, params=list()){
+  
+  # params 
+  #speed_model="NA", miss_speed_post=NA, speed_post_samples = NA, verbose=FALSE, spatial_confound=FALSE
+  
+  speed_model = NA
+  if ("speed_model" %in% params) {
+    speed_model = params[["speed_model"]]
+  }
+  speed_model = ifelse(speed_model=="NA", NA, speed_model)
+  if (!(speed_model %in% c(NA, "NA", "A", "B"))) {
+    stop("Error in gibbs_pdlm: invalid speed_model parameter. Must be one of NA, A, B")
+  }
+  
+  miss_speed_post = params[["miss_speed_post"]]
+  if (!is.na(speed_model) & !is.function(miss_speed_post)){
+    stop("miss_speed_post must be a function")
+  }
+  
+  speed_post_samples = params[["speed_post_samples"]]
+  if (!is.na(speed_model) & is.null(speed_post_samples)){
+    stop("speed_post_samples must be data")
+  }
+  
+  #TODO check dimension of speed_post_samples.
+  # 
+  #if (!is.na(speed_model) & ){
+    #stop("speed_post_samples must be data")
+  #}
+  
+  verbose = FALSE
+  if ( "verbose" %in% params) {
+    if (params[["verbose"]] == TRUE ) {
+      verbose = TRUE
+    }
+  }
+  
+  spatial_confound = FALSE
+  if ("spatial_confound" %in% params) {
+    if (  params[["spatial_confound"]] == TRUE ) {
+      
+      if (regress == FALSE) {
+        stop("Spatial confound error: orthoganlization cannot be done when there are no regression parameters")
+      }
+      
+      spatial_confound = TRUE
+    }
+  }
+  
+  speed_model = ifelse(is.na(speed_model), "NA", speed_model)
+  
+  
   
   prior = NULL #TODO!
   
