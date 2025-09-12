@@ -22,3 +22,4 @@ WindSpeed/visualize_r_versus_x.R
 *.png
 *.Rdata
 *.rds
+*toy*

@@ -1,12 +1,33 @@
 source("WindSpeed/helpers.R")
+source("WindSpeed/initialization.R")
 
+#' create_dataset_figures
+#' 
+#' More each dataset and model requested, creates multiple visualizations of the
+#' data. 
+#' 
+#' @param datasets A list of datasets to create figures for. 
+#' @param params A list of optional parameters to provide
+#'                - impute: - either a named list with where impute[[d]] = TRUE
+#'                            if and only if we want to impute dataset d.
+#'                            If dataset is missing in this list, default is TRUE.
+#'                          - or TRUE/FALSE if we want to impute/not impute all
+#'                            datasets. 
+#' @examples
+#' create_dataset_figures(list("buffalo"), list("1A"))
 create_dataset_figures = function(datasets, params){
+  
+  # Removes any datasets that are invalid. 
+  datasets = valid_datasets(datasets, print_output = TRUE)
   
   root_path = "WindSpeed/experiments/data_visualization/"
   
   
-  impute = list()
+  # ----------------------------------------------------------------------------
+  # Optional parameter processing
+  # ----------------------------------------------------------------------------
   
+  impute = list()
   if (!("impute" %in% names(params))){
     params["impute"] = TRUE
   }
@@ -20,6 +41,9 @@ create_dataset_figures = function(datasets, params){
     # TODO check validity of above. Add to helpers.R?
   }
   
+  # ----------------------------------------------------------------------------
+  # Create figures for each dataset.
+  # ----------------------------------------------------------------------------
   for (dataset in datasets){ 
   
     {
@@ -79,6 +103,18 @@ create_dataset_figures = function(datasets, params){
     
   }
 }
+
+
+
+
+# 
+#
+# Helper functions below:
+#
+#
+
+
+
 
 # ------------------------------------------------------------------------------
 # 1. Angle v speed
@@ -172,6 +208,9 @@ create_time_plots = function(dataset, root_path, a, x) {
 }
 
 
+# ------------------------------------------------------------------------------
+# 1. Angle v speed
+# ------------------------------------------------------------------------------
 create_OLS_regression_plot = function(dataset, root_path, a, x, basis_name, design_matrix) {
   "
   design_matrix: an T x L matrix, where T = length(x) and the ith row, jth column 

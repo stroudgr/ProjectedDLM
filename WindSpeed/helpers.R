@@ -18,7 +18,7 @@ load_dataset = function(dataset, impute=TRUE) {
     TT = length(x)
     
     if (TT > 128) {
-      
+      # Part of dataset with no missing values.
       period = 38 + 1:128
       x = x[period]
       degrees = degrees[period]
