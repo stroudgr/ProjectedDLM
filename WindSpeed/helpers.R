@@ -1,13 +1,16 @@
 source("WindSpeed/initialization.R")
 
+
+# A helper function to load the dataset of the given name.
 load_dataset = function(dataset, impute=TRUE) {
-   
-  #get_index_by_name(dataset)
   
   data_path = all_data_paths[[dataset]]
   
   speed_dir_data = read.csv(data_path)
   
+  # ----------------------------------------------------------------------------
+  # 1. Buffalo Airport dataset.
+  # ----------------------------------------------------------------------------
   if (dataset == "buffalo") {
     degrees = speed_dir_data[["wind_direction"]]
     x = speed_dir_data[["wind_speed"]]
@@ -23,29 +26,31 @@ load_dataset = function(dataset, impute=TRUE) {
     }
     
     a = degrees2radians(degrees)
-    #U = radians2unitcircle(a)
+    # U = radians2unitcircle(a)
     
     if (impute) {
       x = na_interpolation(x)
-      #logx=log(x+1)
       a = na_interpolation(a)
-      #U = radians2unitcircle(a)
+      # U = radians2unitcircle(a)
     }
     
     return(list(a=a, x=x))
     
     
-  } else if (dataset == "santa_ana") {
+  } 
+  # ----------------------------------------------------------------------------
+  # 2. Santa Ana airport during the January 2025 wildfires.
+  # ----------------------------------------------------------------------------
+  else if (dataset == "santa_ana") {
     degrees = speed_dir_data[["drct"]]
     x = speed_dir_data[["sknt"]]
-    #TT = length(x)
     a = degrees2radians(degrees)
+    # U = radians2unitcircle(a)
     
     if (impute) {
-      x = na_interpolation(x)
-      #logx=log(x+1)
+      x = na_interpolation(x) 
       a = na_interpolation(a)
-      #U = radians2unitcircle(a)
+      # U = radians2unitcircle(a)
     }
     
     return(list(a=a, x=x))
