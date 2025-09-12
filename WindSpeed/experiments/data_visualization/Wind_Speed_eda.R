@@ -109,7 +109,7 @@ create_dataset_figures = function(datasets, params){
 
 # 
 #
-# Helper functions below:
+# Helper functions for each individual plot below:
 #
 #
 
@@ -209,22 +209,21 @@ create_time_plots = function(dataset, root_path, a, x) {
 
 
 # ------------------------------------------------------------------------------
-# 1. Angle v speed
+# 3. OLS plot
 # ------------------------------------------------------------------------------
+
+#
+#  design_matrix: an T x L matrix, where T = length(x) and the ith row, jth column 
+#                 of the design_matrix is the application of basis j to data 
+#                 vector xi.
+#  
 create_OLS_regression_plot = function(dataset, root_path, a, x, basis_name, design_matrix) {
-  "
-  design_matrix: an T x L matrix, where T = length(x) and the ith row, jth column 
-                 of the design_matrix is the application of basis j to data 
-                 vector xi.
-  "
   
   
   if (dataset == "buffalo") {
-    #title = "Buffalo angle over speed"
     fname = paste0(root_path, "1. buffalo/")
     
   } else if (dataset == "santa_ana") {
-    #title = "Santa Ana angle over speed"
     fname = paste0(root_path, "2. santa_ana/")
   }
   

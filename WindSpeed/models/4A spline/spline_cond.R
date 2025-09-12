@@ -1,5 +1,4 @@
-#source("_packages.R")
-#source("helpers/_helpers.R")
+source("WindSpeed/models/4A spline/spline_gibbs.R")
 
 # Prereq: a should be radians.
 spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, params, spatial_confound=FALSE) {

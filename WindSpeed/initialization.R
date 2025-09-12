@@ -109,3 +109,11 @@ valid_models = function(models, print_output=TRUE) {
 
 
 
+# ----------------------------------------------------------------------------
+# Other (default) file paths.
+# ----------------------------------------------------------------------------
+MCMC_PATH = "WindSpeed/experiments/MCMC/saved_MCMC/"
+
+
+
+
