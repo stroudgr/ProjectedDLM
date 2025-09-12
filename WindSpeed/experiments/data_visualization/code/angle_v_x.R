@@ -17,7 +17,7 @@ TT = length(x)
 a = a[smaller_indices]
 
 # Load ggplot2
-library(ggplot2)
+
 
 # Create data frame
 df <- data.frame(x = x + rnorm(TT, 0, 0.2), y = a, index = 1:TT)

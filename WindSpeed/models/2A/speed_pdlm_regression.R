@@ -209,7 +209,7 @@ speed_pdlm_regression_point_estimation = function(posterior_samples){
 
 
 
-speed_pdlm_regression_forecast_samples = function(x,a, ndraw=1000, xtransform = function(x){log(x+1)}, h=1, custom_times=NA)  {
+speed_pdlm_regression_forecast_samples = function(x,a, ndraw=1000, xtransform = function(x){log(x+1)}, h=1, custom_times=NA, verbose = FALSE)  {
 
   n=2
   p=2
@@ -291,7 +291,12 @@ speed_pdlm_regression_forecast_samples = function(x,a, ndraw=1000, xtransform = 
     
     pdlm_burn = 1000
     pdlm_thin = 1
-    pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress = TRUE, x=logx[1:(t-1)])
+    
+    
+    #pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress = TRUE, x=logx[1:(t-1)])
+    pdlm_draws=gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress=TRUE, logx=logx[1:(t-1)], speed_model="NA", miss_speed_post=NA, speed_post_samples = NA, verbose=verbose)
+    #gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress=TRUE, logx=log(x+1), speed_model = "A", miss_speed_post=speed_rw_noise_miss_full_posterior_helper, speed_post_samples= speed_post_samples)
+    
     
     #forecast_G_draws[t,,,] = pdlm_draws$G
     G_draws = pdlm_draws$G
@@ -330,6 +335,143 @@ speed_pdlm_regression_forecast_samples = function(x,a, ndraw=1000, xtransform = 
   
   return(list(speed_forecasts = speed_forecasts, direction_forecasts=direction_forecasts))
 }
+
+
+
+
+two_A_ii_forecast_samples = function(x,a, ndraw=1000, xtransform = function(x){log(x+1)}, h=1, custom_times=NA, verbose = FALSE)  {
+  
+  n=2
+  p=2
+  p_max=1
+  #TT = dim(post_samples$S_draws)[1]
+  TT = length(x)
+  
+  logx=xtransform(x)
+  U = radians2unitcircle(a)
+  
+  FF = array(0, c(n, n, TT))
+  for (t in 1:TT) {
+    FF[, , t] = diag(n) #* logx[t] # diag(n) %x% t(x[t])
+  }
+  
+  # ==============================================================================
+  # Forecasting
+  # ==============================================================================
+  
+  speed_forecasts = array(0, dim= c(ndraw, TT))
+  direction_forecasts = array(0, dim = c(ndraw, n, TT))
+  model_median = matrix(0, TT, n)
+  
+  #forecast_sigma_w_samples = array(0, dim=c(ndraw, TT))
+  #forecast_sigma_e_samples = array(0, dim=c(ndraw, TT))
+  #forecast_s_samples = array(0, dim=c(ndraw, TT, n))
+  
+  #forecast_G_draws = array(0, dim=c(TT, p, p, ndraw ))
+  
+  speed_model <- stan_model("WindSpeed/models/1A/rw.stan")
+  
+  #start = TT
+  start = max(1, TT-h+1)
+  partial_x = logx
+  partial_x[start:TT] = NA
+  
+  outer_interval = start:TT
+  
+  if (sum(!is.na(custom_times)) > 0){
+    print("Using custom times")
+    outer_interval = custom_times
+    
+  }
+  
+  for (t in outer_interval) {
+    
+    #d = 1
+    #speed_model = SSModel(partial_x ~ -1 + SSMcustom(Z=diag(d),
+    #                                            T=diag(d),
+    #                                            R=diag(d),
+    #                                            Q=diag(d),
+    #                                            a1=rep(0,d),
+    #                                            P1=diag(1),
+    #                                            P1inf=matrix(0, d, d) ), H=diag(1)) 
+    
+    #partial_x[t] = logx[t]
+    
+    #logx_one_step_forecast = simulateSSM(speed_model, type="obs", nsim = ndraw, conditional=TRUE)#[,1,]
+    #logx_one_step_forecast = logx_one_step_forecast[t,1,]
+    
+    
+    data_list <- list(
+      T = t-1,
+      x = logx[1:(t-1)]
+    )
+    
+    # Sample from the posterior
+    fit <- sampling(speed_model, data = data_list, chains = 4, iter = ndraw, warmup = round(ndraw/2), seed = 42)
+    
+    posterior <- rstan::extract(fit)
+    
+    #forecast_sigma_w_samples[,t] <- posterior$sigma_w
+    sigma_w_samples <- posterior$sigma_w
+    #forecast_sigma_e_samples[,t] <- posterior$sigma_e
+    sigma_e_samples <- posterior$sigma_e
+    s_samples <- posterior$s
+    
+    
+    
+    pdlm_burn = 1000
+    pdlm_thin = 1
+    
+    
+    #pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress = TRUE, x=logx[1:(t-1)])
+    pdlm_draws=gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress=TRUE, logx=logx[1:(t-1)], speed_model="NA", miss_speed_post=NA, speed_post_samples = NA, verbose=verbose, spatial_confound = TRUE)
+    #gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress=TRUE, logx=log(x+1), speed_model = "A", miss_speed_post=speed_rw_noise_miss_full_posterior_helper, speed_post_samples= speed_post_samples)
+    
+    
+    #forecast_G_draws[t,,,] = pdlm_draws$G
+    G_draws = pdlm_draws$G
+    #forecast_W_draws[t,,,] = pdlm_draws$W
+    W_draws = pdlm_draws$W
+    #forecast_V_draws[t,,,] = pdlm_draws$Sigma
+    V_draws = pdlm_draws$Sigma
+    #forecast_S_draws[t,1:(t-1),,] = pdlm_draws$S[t-1,,]
+    S_draws = pdlm_draws$S[t-1,,]
+    
+    beta_draws = pdlm_draws$beta
+    
+    for(m in 1:ndraw){
+      
+      new_s = rnorm(1, mean = s_samples[m, t-1], sd = sqrt(sigma_w_samples[m]))
+      new_x = rnorm(1, mean = new_s, sd = sqrt(sigma_e_samples[m]))
+      #new_x = logx_one_step_forecast[m]
+      
+      speed_forecasts[m,t] = new_x
+      
+      old_s = S_draws[ , m]
+      G = G_draws[, , m]
+      W = W_draws[, , m]
+      V = V_draws[, , m]
+      beta = beta_draws[,m]
+      
+      Ft = diag(n)
+      
+      # TODO: Reuse variable name new_s?  
+      new_s = G %*% old_s + mvrnorm(n = 1, mu = numeric(p), W)
+      new_y = new_x*beta +  Ft %*% new_s + mvrnorm(n = 1, mu = numeric(n), V) 
+      direction_forecasts[m, , t] = new_y / sqrt(sum(new_y^2))
+    }
+    
+  }
+  
+  return(list(speed_forecasts = speed_forecasts, direction_forecasts=direction_forecasts))
+}
+
+
+
+
+
+
+
 
 
 

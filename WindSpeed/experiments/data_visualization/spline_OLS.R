@@ -33,7 +33,7 @@ prediction
 #} else {
   a_pred = prediction
 #}
-library(ggplot2)
+
 
 ggplot() +
   geom_point(aes(x = x, y = a), color = "black", alpha = .5) +

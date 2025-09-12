@@ -1,4 +1,4 @@
-gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, x, speed_model = NA, miss_speed_post=NA, speed_post_samples = NA){
+gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, x, speed_model = NA, miss_speed_post=NA, speed_post_samples = NA, spatial_confound=FALSE){
   # ----------------------------------------------------------------------------
   # dimensions
   # ----------------------------------------------------------------------------
@@ -170,7 +170,8 @@ gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, nd
     
     # S is dimension TT x p
     S_copy = S
-    S = orthogonalizer %*% S
+    if (spatial_confound)
+      S = orthogonalizer %*% S
     
     
     for (t in 1:TT) {

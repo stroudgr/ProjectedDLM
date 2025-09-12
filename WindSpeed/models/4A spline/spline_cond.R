@@ -2,7 +2,7 @@
 #source("helpers/_helpers.R")
 
 # Prereq: a should be radians.
-spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, params) {
+spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, params, spatial_confound=FALSE) {
   
   verbose = FALSE
   stan_output = TRUE
@@ -97,7 +97,7 @@ spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransfo
   speed_post_samples = list(psi = s_samples, sigma_sq = sigma_e_samples)
   
   #pdlm_draws = gibbs_pdlm_basic(U, FF, V, G, W, s1, P1, r0, ndraw, pdlm_burn, pdlm_thin)
-  pdlm_draws = gibbs_pdlm_splines(num_basis=3, U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, speed_model="A", x=x)
+  pdlm_draws = gibbs_pdlm_splines(num_basis=3, U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, speed_model="A", x=x, spatial_confound = spatial_confound)
   
   
   S_draws = pdlm_draws$S#[TT,,]
@@ -177,7 +177,7 @@ spline_point_estimation = function(posterior_samples){
   return(list(u_med=u_med, a_med=a_med))
 }
 
-spline_forecast_samples = function(x,a, ndraw=1000, xtransform=function(x){log(x+1)}, h=1, custom_times = NA) {
+spline_forecast_samples = function(x,a, ndraw=1000, xtransform=function(x){log(x+1)}, h=1, custom_times = NA, spatial_confound=FALSE) {
   
   L = 3
   n=2
@@ -251,7 +251,7 @@ spline_forecast_samples = function(x,a, ndraw=1000, xtransform=function(x){log(x
     pdlm_thin = 1
     
     
-    pdlm_draws = gibbs_pdlm_splines(num_basis=L, U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, x=x[1:(t-1)])
+    pdlm_draws = gibbs_pdlm_splines(num_basis=L, U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, x=x[1:(t-1)], spatial_confound=spatial_confound)
     
     #forecast_G_draws[t,,,] = pdlm_draws$G
     G_draws = pdlm_draws$G

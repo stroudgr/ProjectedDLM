@@ -1,4 +1,5 @@
 source("WindSpeed/experiments/model_visualization/state_visualization/state_visualize.R")
+source("WindSpeed/experiments/model_visualization/non_parametric_function_visualization/non_parametric_function_visualization.R")
 
 visualize_states = function(models, datasets, params) {
   
@@ -31,6 +32,16 @@ visualize_states = function(models, datasets, params) {
       
     }
   }
+  
+  
+  
+  
+}
+
+
+
+
+nonparametric_function_visualization = function(datasets, params) {
   
   
   

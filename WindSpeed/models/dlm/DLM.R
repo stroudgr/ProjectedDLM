@@ -111,6 +111,8 @@ dlm_forecasting = function(x,a, ndraw=1000, xtransform=function(x){log(x+1)}, h=
   #
   logx = xtransform(x)
   
+  TT = length(x)
+  
   FF = array(0, c(n, n, TT))
   for (t in 1:TT) {
     FF[, , t] = diag(n) * logx[t] # diag(n) %x% t(x[t])

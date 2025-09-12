@@ -103,10 +103,6 @@ create_angle_v_speed_figure = function(dataset, root_path, a, x) {
   
   TT = length(x)
   
-  
-  # Load ggplot2
-  library(ggplot2)
-  
   # Create data frame
   # Add a little noise for less overall of points.
   df <- data.frame(x = x + rnorm(TT, 0, 0.2), y = a, index = 1:TT)
@@ -204,8 +200,6 @@ create_OLS_regression_plot = function(dataset, root_path, a, x, basis_name, desi
   #} else {
     a_pred = prediction
   #}
-  
-  library(ggplot2)
   
   p= ggplot() +
     geom_point(aes(x = x, y = a), color = "black", alpha = .5) +

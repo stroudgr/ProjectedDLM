@@ -1,8 +1,4 @@
-#source("_packages.R")
-#source("helpers/_helpers.R")
-library(Rfast)
-library(tvReg)
-library(rstan)
+
 
 # Prereq: a should be radians.
 speed_rw_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}) {

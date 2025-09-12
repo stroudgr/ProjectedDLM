@@ -178,10 +178,12 @@ gibbs_pdlm_intermediate <- function(U, FF, V, priorparams, init, ndraw, burn, th
 # ==============================================================================
 # ==============================================================================
 
-gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, regress=FALSE, logx, speed_model, miss_speed_post=NA, speed_post_samples = NA, verbose=FALSE){
+gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, regress=FALSE, logx, speed_model="NA", miss_speed_post=NA, speed_post_samples = NA, verbose=FALSE, spatial_confound=FALSE){
   # ----------------------------------------------------------------------------
   # dimensions
   # ----------------------------------------------------------------------------
+  
+  prior = NULL #TODO!
   
   x = exp(logx)-1
   
@@ -273,15 +275,20 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
   # off to war
   # ----------------------------------------------------------------------------
   
+  #TODO: not working
+  #proj_X = x %*% solve(out(x,x)) %*% t(X)
+  
   draw = 0
-  
-  nn = 51
-  kk = 25
-  
-  idx = round(seq(1,n, length.out = 25))
-  
+  ten_percents = round(seq(1, M, length.out = 10))
+  #ten_percents = 1:M
   
   for (m in 1:M) {
+    
+    if (verbose){
+      if (m %in% ten_percents){
+        cat(paste0("PDLM Iteration ", m, " / ", M, "\n"))
+      }
+    }
     
     # --------------------------------------------------------------------------
     # draw from p(states | ...)
@@ -340,7 +347,6 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
       
     }
     
-    
     # --------------------------------------------------------------------------
     # draw from p(Sigma | ...)
     # --------------------------------------------------------------------------
@@ -356,14 +362,20 @@ gibbs_pdlm <- function(U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0,
     # --------------------------------------------------------------------------
     
     GW = sample_conjugate_posterior_varp(S, 1, FALSE, GW_prior, TRUE)
+    
     G = t(GW$B)
+    
     W = GW$S
+    
     
     # --------------------------------------------------------------------------
     # draw from p(r | ...)
     # --------------------------------------------------------------------------
     
+    
     r = draw_lengths_given_else_FFS(U, FF, Sigma, r, S)
+    
+    
     
     if ( retain_draw(m, burn, thin) ) {
       draw = draw + 1

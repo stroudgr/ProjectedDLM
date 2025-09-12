@@ -46,7 +46,10 @@ local({
   models = list("1A", "2A", "3A", "4A", "dlm")
   datasets = list("santa_ana")
   
+  datasets = list("buffalo")
+  
   models = list("4A")
+  models = list("4Aii")
   
   run_MCMC(models, datasets, params) 
   
@@ -70,17 +73,27 @@ local({
 # The experiment is Model inference: posterior predictive forecasting
 if (RUN_EXPERIMENT_3) {
 local({
+  
+  buffalo_time_steps = c(44, 109, 128)
+  santa_ana_time_steps = c(300, 1500, 2500, 3500, 5000)
+  
+  
   params = list()
-  params[["time_range"]] = list(buffalo=c(50, -1), santa_ana = c(1200,1210))
+  params[["time_range"]] = list(buffalo= buffalo_time_steps)
   params["impute"] = TRUE
   params["rerun"] = FALSE
-  params["verbose"] = FALSE
+  params["verbose"] = TRUE
   params["stan_output"] = FALSE
+  
   
   # Params should include:
   # - For what subinterval of data am I experimenting on?
   # - runMCMC if no data saved?
   # - For how long do I forecast for?
+  
+  datasets = list("buffalo")
+  models = list("1A", "2A", "3A", "4A", "dlm")
+  models = list("4Aii")
   
   forecast_samples(models, datasets, params)
   

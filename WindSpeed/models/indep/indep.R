@@ -234,7 +234,10 @@ indep_forecast_samples = function(x,a, ndraw=1000, xtransform=function(x){log(x+
     
     pdlm_burn = 1000
     pdlm_thin = 1
-    pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin)
+    #pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin)
+    pdlm_draws = gibbs_pdlm(U[1:(t-1), ], FF[, , 1:(t-1)], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, logx=logx, speed_model, miss_speed_post=NA, speed_post_samples = NA, verbose=FALSE)
+    
+    
     
     #forecast_G_draws[t,,,] = pdlm_draws$G
     G_draws = pdlm_draws$G
