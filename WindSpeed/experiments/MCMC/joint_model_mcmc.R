@@ -306,12 +306,36 @@ forecast_samples = function(models, datasets, last_data_times, H=1, params=list(
         if (!rerun & file.exists(save_path)) {
           
           if (verbose){
-            cat(paste0("Found saved data for ", model, " on dataset ", dataset, "[1:", TT, "] \n"))
+            cat(paste0("Found forecast saved data for ", model, " on dataset ", dataset, "\n"))
             # f_samples = get(load(save_path))
           }
-          next
+          
         }
         
+        # Which times I don't have to rerun for.
+        indicator_times_path = paste0(root_path, "/", model, "/forecast_samples/", dataset, "/indicator_times.Rdata") 
+        
+        if (file.exists(indicator_times_path)) {
+          
+          # See where forecasts have already been saved.
+          indicator_times = get(load(indicator_times_path))
+        
+          if (!rerun){
+            # See which times are actually new.
+            times = setdiff(times, which(indicator_times))
+          }
+          
+          # If no times to run, just skip to next model.
+          if (length(times) == 0){
+            next
+          }
+        
+        } else {
+          indicator_times = array(FALSE, dim=TT)
+        }
+        
+        # Says what forecasts are going to be saved.
+        indicator_times[times] = TRUE
         
         
         if (model == "1A") {
@@ -345,6 +369,7 @@ forecast_samples = function(models, datasets, last_data_times, H=1, params=list(
         }
         
         save(f_samples, file = save_path)
+        save(indicator_times, file = indicator_times_path)
       
       } # end for model loop
     } # end dataset loop

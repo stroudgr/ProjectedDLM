@@ -148,6 +148,8 @@ extract_impute_list = function(params, datasets, default=TRUE) {
   } else {
     stop("impute option must be TRUE/FALSE or a named list.")
   }
+  
+  return(impute)
 }
 
 

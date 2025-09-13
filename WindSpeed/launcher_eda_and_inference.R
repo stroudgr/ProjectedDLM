@@ -70,15 +70,16 @@ local({
 if (RUN_EXPERIMENT_3) {
 local({
   
-  buffalo_time_steps = c(44, 109, 128)
+  
+  buffalo_time_steps = 10:20#c(29) # full times was c(29, 44, 53, 109, 128)
   santa_ana_time_steps = c(300, 1500, 2500, 3500, 5000)
   
   
   params = list()
   params["impute"] = TRUE
-  params["rerun"] = list("1A"=TRUE)#FALSE
+  params["rerun"] = FALSE #list("1A"=TRUE)
   params["verbose"] = TRUE
-  params["stan_output"] = FALSE
+  params["diagnostics"] = FALSE
   
   
   # Params should include:
@@ -88,6 +89,8 @@ local({
   
   datasets = list("buffalo")
   models = list("1A", "2A", "3A", "4A", "dlm")
+  
+  models = list("1A")
   
   last_data_times = list(buffalo= buffalo_time_steps)
   
