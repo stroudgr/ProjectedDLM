@@ -43,7 +43,7 @@ valid_datasets = function(datasets, print_output=TRUE) {
   
   if (print_output) {
     for (r in removals) {
-      cat(paste0(r, " is not the name of a dataset."))
+      cat(paste0(r, " is not the name of a dataset.\n"))
     }
   }
   
@@ -109,11 +109,45 @@ valid_models = function(models, print_output=TRUE) {
 
 
 
-# ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Other (default) file paths.
-# ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 MCMC_PATH = "WindSpeed/experiments/MCMC/saved_MCMC/"
 
 
+
+
+
+# ------------------------------------------------------------------------------
+# Input verification
+# ------------------------------------------------------------------------------
+
+extract_impute_list = function(params, datasets, default=TRUE) {
+  impute = list()
+  
+  # What to do in default case.
+  if (!("impute" %in% names(params))){
+    params["impute"] = default
+  }
+  
+  # If binary, then impute all or none of the data
+  if (params[["impute"]] == TRUE | params[["impute"]] == FALSE) {
+    for (dataset in datasets) {
+      impute[dataset] = params[["impute"]]
+    }
+  } else if (is.list(params[["impute"]])) { # If I pass in a custom list to specify for each dataset.
+    impute = params["impute"] 
+    
+    # Fill in missing datasets to default.
+    for (dataset in datasets) {
+      if (!(dataset %in% impute)){
+        impute[dataset] = default
+      }
+    }
+    
+  } else {
+    stop("impute option must be TRUE/FALSE or a named list.")
+  }
+}
 
 

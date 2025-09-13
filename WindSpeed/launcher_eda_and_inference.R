@@ -75,9 +75,8 @@ local({
   
   
   params = list()
-  params[["time_range"]] = list(buffalo= buffalo_time_steps)
   params["impute"] = TRUE
-  params["rerun"] = FALSE
+  params["rerun"] = list("1A"=TRUE)#FALSE
   params["verbose"] = TRUE
   params["stan_output"] = FALSE
   
@@ -90,7 +89,9 @@ local({
   datasets = list("buffalo")
   models = list("1A", "2A", "3A", "4A", "dlm")
   
-  forecast_samples(models, datasets, params)
+  last_data_times = list(buffalo= buffalo_time_steps)
+  
+  forecast_samples(models, datasets, last_data_times, params=params)
   
 })
 }
