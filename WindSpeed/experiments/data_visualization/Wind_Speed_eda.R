@@ -96,9 +96,42 @@ create_dataset_figures = function(datasets, params){
     create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
     
     
-    design_matrix <- generate_design_matrix(degree = 3, knot_vector = c(10,20, 30), x = x)
+    design_matrix <- generate_design_matrix(degree = 3, knot_vector = c(4,5,6,7, 10,20, 30), x = x)
     basis_name = "cubic splines"
     create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
+    
+    
+    design_matrix <- generate_design_matrix(degree = 3, knot_vector = sort(unique(x)), x = x)
+    basis_name = "cubic splines_all_knots"
+    
+    #library(fda)
+    
+    #b = create.bspline.basis(rangeval = c(0, max(x)+1),
+    #                         breaks = sort(x), # knot locations
+    #                         norder = 4) # cubic spline (order = degree + 1)
+    
+    #design_matrix = eval.basis(x, b)
+    
+    #Omega = eval.penalty(b, Lfdobj = 2)
+    #lambda = 0.01  
+    
+    #theta = solve(crossprod(Bmat) + lambda*Omega)%*%crossprod(Bmat, y)
+    #f = Bmat%*%theta  # fitted curve
+    
+    
+    
+    create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
   }

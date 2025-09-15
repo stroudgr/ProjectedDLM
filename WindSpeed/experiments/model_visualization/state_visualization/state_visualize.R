@@ -101,6 +101,19 @@ buffalo_visualize_states = function(model, post_samples){
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 santa_ana_visualize_states = function(model, post_samples){
   city = "Santa Ana"
   city_fname = "2_santa_ana"
@@ -187,8 +200,8 @@ santa_ana_visualize_states = function(model, post_samples){
         beta2 = beta_draws[2,]
         
         
-        hist(beta1)
-        hist(beta2)
+        #hist(beta1)
+        #hist(beta2)
         
       }
       
