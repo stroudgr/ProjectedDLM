@@ -65,9 +65,17 @@ sample_conjugate_posterior_varp <- function(data, p, intercept, prior_params, ch
   B = BS$B
   n = ncol(data)
   if(check_expl == TRUE){
+    explosive_count = 0
     while(isexplosive(mvcompanion(B[(1 + intercept):(n * p + intercept), ]))) {
       BS = rmatnorminvwish(post_params)
       B = BS$B
+      explosive_count = explosive_count + 1
+      
+      if (explosive_count >= 1000) {
+        cat("Explosive count exceeded 1000.\n")
+        return( NULL)
+      }
+      
     }
   }
   return(BS)
