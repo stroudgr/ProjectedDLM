@@ -1,4 +1,10 @@
-gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, x, speed_model = NA, miss_speed_post=NA, speed_post_samples = NA, spatial_confound=FALSE){
+source("WindSpeed/models/4A spline/bases_initialization.R")
+
+
+
+
+
+gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, x, speed_model = NA, miss_speed_post=NA, speed_post_samples = NA, bases=1, spatial_confound=FALSE){
   # ----------------------------------------------------------------------------
   # dimensions
   # ----------------------------------------------------------------------------
@@ -8,27 +14,27 @@ gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, nd
 
   p = dim(FF)[2]
   M = burn + thin * ndraw
-  L = num_basis
   
-  bases = list(
-                function(x) {x}, 
-                function(x) {log(x+1)}, 
-                function(x){ (x>10)*1 }
-                )
-  #bases = list(
-  #  function(x) {x},
-  #  function(x) {},
-  #  function(x) {},
-  #)
   
-  bases = bases[1:L]
-  
+  L = get_num_basis_functions(bases)
   # This is TT x L
   # and BX[i,j] = bj(xi)
-  BX = sapply(bases, function(f) sapply(x, f))
-  # DO I have to transpose it?
-  
+  BX = get_design_matrix(bases, x) # TODO Do I have to transpose it?
   # BX is T x L
+  roughness_rate = 0
+  
+  roughness = get_roughness_matrix(bases, x)
+  
+  if (bases == 1) {
+    roughness_rate = 0
+  } else if (bases == 2){
+    roughness_rate = 0
+  } else if (bases == 3) {
+    roughness_rate = 0.1
+  } else{
+    stop("Not a valid choice for bases.")
+  }
+  
   
   # This is T x T
   proj_BX = BX %*% solve(t(BX) %*% BX) %*% t(BX)
@@ -259,8 +265,10 @@ gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, nd
     # --------------------------------------------------------------------------
     
     GW = sample_conjugate_posterior_varp(S, 1, FALSE, GW_prior, TRUE)
-    G = t(GW$B)
-    W = GW$S
+    if (!is.null(GW)){
+      G = t(GW$B)
+      W = GW$S
+    }
     
     # --------------------------------------------------------------------------
     # draw from p(r | ...)

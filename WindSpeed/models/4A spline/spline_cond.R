@@ -1,7 +1,7 @@
 source("WindSpeed/models/4A spline/spline_gibbs.R")
 
 # Prereq: a should be radians.
-spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, params, spatial_confound=FALSE) {
+spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, params, bases, spatial_confound=FALSE) {
   
   verbose = FALSE
   stan_output = TRUE
@@ -176,7 +176,7 @@ spline_point_estimation = function(posterior_samples){
   return(list(u_med=u_med, a_med=a_med))
 }
 
-spline_forecast_samples = function(x,a, ndraw=1000, xtransform=function(x){log(x+1)}, h=1, custom_times = NA, spatial_confound=FALSE) {
+spline_forecast_samples = function(x,a, ndraw=1000, xtransform=function(x){log(x+1)}, h=1, custom_times = NA, bases, spatial_confound=FALSE) {
   
   L = 3
   n=2
@@ -207,13 +207,22 @@ spline_forecast_samples = function(x,a, ndraw=1000, xtransform=function(x){log(x
   #forecast_G_draws = array(0, dim=c(TT, p, p, ndraw ))
   
   bases = list(
-    function(x) {x}, 
-    function(x) {log(x+1)}, 
-    function(x){ (x>10)*1 }
+    #function(x) {x}, 
+    #function(x) {log(x+1)}, 
+    #function(x){ (x>10)*1 }
+    function(x) {1}
   )
-  bases = bases[1:L]
+  #bases = bases[1:L]
   
+  knots = c(4,5,6,7, 10,20, 30)
   
+  i <- 1
+  degree = 3
+  while(i < length(knots) + 1) {
+    bases[[i+1]] <- function(x) {(x>knots[i])*(x-knots[i])^degree}
+    i <- i + 1
+  }
+  L=length(bases)
   
   start = min(max(1, TT-h+1), TT)
   #start=TT

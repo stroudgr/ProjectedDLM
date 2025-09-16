@@ -1,5 +1,6 @@
 source("WindSpeed/helpers.R")
 source("WindSpeed/initialization.R")
+source("WindSpeed/models/4A spline/bases_initialization.R")
 
 #' create_dataset_figures
 #' 
@@ -66,73 +67,8 @@ create_dataset_figures = function(datasets, params){
     # 3. OLS for different bases
     # --------------------------------------------------------------------------
     
-    
-    generate_design_matrix <- function(x, knot_vector, degree){
-      return(cbind(outer(x,1:degree,"^"),outer(x,knot_vector,">")*outer(x,knot_vector,"-")^degree))
-    }
-    
-    gdm2 = function(x){
-      return(cbind(x, (x>10)*1))
-    }
-    
-    gdm3 = function(x){
-      return(cbind(x, log(x+1), (x>10)*1))
-    }
-    
-    
-    # TODO, these should depend on dataset I think.
-    design_matrix <- generate_design_matrix(degree = 1, knot_vector = c(10,20, 30), x = x)
-    basis_name = "Linear splines"
-    create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
-    
-    
-    
-    design_matrix = gdm2(x)
-    basis_name = "Indicator"
-    create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
-    
-    design_matrix = gdm3(x)
-    basis_name = "Indicator and log"
-    create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
-    
-    
-    design_matrix <- generate_design_matrix(degree = 3, knot_vector = c(4,5,6,7, 10,20, 30), x = x)
-    basis_name = "cubic splines"
-    create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
-    
-    
-    design_matrix <- generate_design_matrix(degree = 3, knot_vector = sort(unique(x)), x = x)
-    basis_name = "cubic splines_all_knots"
-    
-    #library(fda)
-    
-    #b = create.bspline.basis(rangeval = c(0, max(x)+1),
-    #                         breaks = sort(x), # knot locations
-    #                         norder = 4) # cubic spline (order = degree + 1)
-    
-    #design_matrix = eval.basis(x, b)
-    
-    #Omega = eval.penalty(b, Lfdobj = 2)
-    #lambda = 0.01  
-    
-    #theta = solve(crossprod(Bmat) + lambda*Omega)%*%crossprod(Bmat, y)
-    #f = Bmat%*%theta  # fitted curve
-    
-    
-    
-    create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    bases = c(1,2)
+    create_OLS_regression_plots(dataset, root_path, bases = bases)
     
   }
 }
@@ -145,9 +81,6 @@ create_dataset_figures = function(datasets, params){
 # Helper functions for each individual plot below:
 #
 #
-
-
-
 
 # ------------------------------------------------------------------------------
 # 1. Angle v speed
@@ -245,32 +178,56 @@ create_time_plots = function(dataset, root_path, a, x) {
 # 3. OLS plot
 # ------------------------------------------------------------------------------
 
-#
-#  design_matrix: an T x L matrix, where T = length(x) and the ith row, jth column 
-#                 of the design_matrix is the application of basis j to data 
-#                 vector xi.
-#  
-create_OLS_regression_plot = function(dataset, root_path, a, x, basis_name, design_matrix) {
+create_OLS_regression_plots = function(dataset, root_path, bases=c(1,2,3)) {
   
   
   if (dataset == "buffalo") {
     fname = paste0(root_path, "1. buffalo/")
+    xa = load_dataset("buffalo")
+    x = xa$x
+    a = xa$a
     
   } else if (dataset == "santa_ana") {
     fname = paste0(root_path, "2. santa_ana/")
+    xa = load_dataset("buffalo")
+    x = xa$x
+    a = xa$a
+  } else {
+    stop("create_OLS_regression_plots : no such dataset ", dataset, "\n")
   }
   
-  mod_spline <- lm(a~design_matrix)
-  #mod_spline <- lm(U~design_matrix)
+  for (basis in bases) {
   
-  prediction = predict(mod_spline)
+  Bmat = get_design_matrix(basis, x)
   
-  # Use U or a, doesn't seem to make a difference.
-  #if (dim(prediction)[2] == 2) {
-  #  a_pred = unitcircle2radians(prediction)
-  #} else {
+  if (!(basis %in% 1:get_num_bases())){
+    cat(paste0("Invalid basis num ", basis  , "\n"))
+    next 
+  }
+  
+  if (basis == 1 | basis == 2) {
+    mod_spline <- lm(a~Bmat)
+    #mod_spline <- lm(U~Bmat)
+    
+    prediction = predict(mod_spline)
+    
+    # Use U or a, doesn't seem to make a difference.
+    #if (dim(prediction)[2] == 2) {
+    #  a_pred = unitcircle2radians(prediction)
+    #} else {
     a_pred = prediction
-  #}
+    #}
+  } else if (basis == 3) {
+    # TODO move to bases_initialization file.
+    roughness_rate = 0.1
+    
+    # TODO need to implement this function.
+    roughness = get_roughness_matrix(basis, x)
+    a_pred = solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, a)
+    
+  }
+  
+  basis_name = bases_names[[basis]]
   
   p= ggplot() +
     geom_point(aes(x = x, y = a), color = "black", alpha = .5) +
@@ -278,6 +235,8 @@ create_OLS_regression_plot = function(dataset, root_path, a, x, basis_name, desi
     labs(title= paste0("OLS for direction on ", basis_name, " for ", dataset))
   ggsave(paste0(fname, "OLS_", basis_name, ".png"),  plot=p)
   
-  
+  }
 }
+
+
 
