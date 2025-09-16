@@ -38,7 +38,7 @@ create_dataset_figures = function(datasets, params){
       impute[dataset] = params[["impute"]]
     }
   } else { # If I pass in a custom list to specify for each dataset.
-    impute = params["impute"] 
+    impute = params[["impute"]] 
     # TODO check validity of above. Add to helpers.R?
   }
   
@@ -67,7 +67,7 @@ create_dataset_figures = function(datasets, params){
     # 3. OLS for different bases
     # --------------------------------------------------------------------------
     
-    bases = c(1,2)
+    bases = c(3)
     create_OLS_regression_plots(dataset, root_path, bases = bases)
     
   }
@@ -186,12 +186,16 @@ create_OLS_regression_plots = function(dataset, root_path, bases=c(1,2,3)) {
     xa = load_dataset("buffalo")
     x = xa$x
     a = xa$a
+    U = radians2unitcircle(a)
     
   } else if (dataset == "santa_ana") {
+    cat("Santa\n")
     fname = paste0(root_path, "2. santa_ana/")
-    xa = load_dataset("buffalo")
+    xa = load_dataset("santa_ana")
     x = xa$x
     a = xa$a
+    U = radians2unitcircle(a)
+    
   } else {
     stop("create_OLS_regression_plots : no such dataset ", dataset, "\n")
   }
@@ -206,24 +210,30 @@ create_OLS_regression_plots = function(dataset, root_path, bases=c(1,2,3)) {
   }
   
   if (basis == 1 | basis == 2) {
-    mod_spline <- lm(a~Bmat)
-    #mod_spline <- lm(U~Bmat)
+    #mod_spline <- lm(a~Bmat)
+    mod_spline <- lm(U~Bmat)
     
     prediction = predict(mod_spline)
     
     # Use U or a, doesn't seem to make a difference.
     #if (dim(prediction)[2] == 2) {
-    #  a_pred = unitcircle2radians(prediction)
+      a_pred = unitcircle2radians(prediction)
     #} else {
-    a_pred = prediction
+    #a_pred = prediction
     #}
   } else if (basis == 3) {
     # TODO move to bases_initialization file.
     roughness_rate = 0.1
     
-    # TODO need to implement this function.
-    roughness = get_roughness_matrix(basis, x)
-    a_pred = solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, a)
+    fit <- smooth.spline(x, a, spar = 0.5)  # spar controls smoothness
+    a_pred  <- predict(fit, x)$y
+    
+    #a_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, a)
+    #u1_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, U[,1])
+    #u2_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, U[,2])
+    
+    #U_pred = cbind(u1_pred, u2_pred)
+    #a_pred = unitcircle2radians(U_pred)
     
   }
   
