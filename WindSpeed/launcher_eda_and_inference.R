@@ -3,9 +3,9 @@ source("WindSpeed/_packages.R")
 source("helpers/_helpers.R")
 source("WindSpeed/_helpers.R")
 
-RUN_EXPERIMENT_1 = TRUE
-RUN_EXPERIMENT_2 = FALSE
-RUN_EXPERIMENT_3 = FALSE
+RUN_EXPERIMENT_1 = FALSE
+RUN_EXPERIMENT_2 = TRUE
+RUN_EXPERIMENT_3 = TRUE
 
 # ------------------------------------------------------------------------------
 # Experiment 1
@@ -38,18 +38,20 @@ local({
   #        -> Eg: fit <- stan(model_code = "...", data = "...", refresh = 0) 
   # - May as well always save posterior samples.
   # - General progress output: Y/N
+  
   params = list(verbose = TRUE, stan_output=FALSE, diagnostics = TRUE)
   params["impute"] = TRUE
   params[["end_times"]] = list()
-  params["rerun"] = TRUE
+  params["rerun"] = FALSE
   
   
-  #models = list("1A", "2A", "3A", "4A", "dlm")
-  models = list("4A","4Aii")
-  models = list("4A")
+  models = list("1A", "2A", "3A", "4A", "dlm")
+  
+  #models = list("4A","4Aii")
+  #models = list("4A")
   #models = list("4Aii")
-  datasets = list("santa_ana")
-  #datasets = list("buffalo")
+  #datasets = list("buffalo", "santa_ana")
+  datasets = list("buffalo")
   
   run_MCMC(models, datasets, params) 
   
@@ -70,12 +72,12 @@ local({
 # ------------------------------------------------------------------------------
 # Experiment 3
 # ------------------------------------------------------------------------------
-# The experiment is Model inference: posterior predictive forecasting
+# The experiment is Model inference: posterior predictive one-step forecasting
 if (RUN_EXPERIMENT_3) {
 local({
   
   
-  buffalo_time_steps = 10:128#c(29) # full times was c(29, 44, 53, 109, 128)
+  buffalo_time_steps = c(29, 44, 53, 109, 128) # full times was c(29, 44, 53, 109, 128)
   santa_ana_time_steps = c(300, 1500, 2500, 3500, 5000)
   
   

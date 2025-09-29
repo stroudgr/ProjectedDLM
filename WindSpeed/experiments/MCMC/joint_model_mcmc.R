@@ -83,7 +83,7 @@ run_MCMC = function(models, datasets, params=list()) {
   }
   
   rerun = FALSE 
-  if ("rerun" %in% params(params)) {
+  if ("rerun" %in% names(params)) {
     if (params[["rerun"]]) {
       rerun = TRUE
     }
@@ -92,11 +92,12 @@ run_MCMC = function(models, datasets, params=list()) {
   
   if (verbose) {
     cat("Running MCMC with the following params: \n")
-    cat(paste0("diagnostics=", diagnostics, "\n"))
+    cat("diagnostics=", diagnostics, "\n")
     cat(paste0("impute=", impute, "\n"))
-    cat(paste0("rerun=", rerun, "\n"))
-    cat(paste0("root_path=", root_path, "\n"))
+    cat("rerun=", rerun, "\n")
+    cat("root_path=", root_path, "\n")
     cat(paste0("end_times=", end_times, "\n"))
+    cat("\n")
   }
   
   MCMC_params = list(diagnostics = diagnostics, verbose=verbose, stan_output=diagnostics)
@@ -128,18 +129,29 @@ run_MCMC = function(models, datasets, params=list()) {
     
     for (model in models) {
       
+      t = end_times[[dataset]]
+      
       # Where to load or save MCMC samples for this model.
       folder_name = paste0(root_path, "/", model, "/post_samples/", dataset, "/")
-      save_path = ifelse((end_times[[dataset]] == TT), "post", paste0("post_Time_", end_times[[dataset]]) )
+      save_path = ifelse((t == TT), "post", paste0("post_Time_", t) )
       save_path = paste0(folder_name, save_path ,".Rdata")
       
       # Don't rerun in this case.
       if (!rerun & file.exists(save_path)) {
         if (verbose){
-          cat(paste0("Found saved data for ", model, " on dataset ", dataset, "[1:", TT, "] \n"))
+          cat(paste0("Found saved data for model ", model, " on dataset ", dataset, "[1:", TT, "] \n"))
           # post_samples = get(load(save_path))
         }
         next
+      } else if(!rerun & !file.exists(save_path)) {
+        stop(paste0("Error: no MCMC data for dataset ", dataset, ", model ", model, " at time ", t, "\n"))
+      } else if(rerun ) {
+        
+        if (!file.exists(save_path)) {
+          # TODO: Create file/directory
+        }
+        
+        
       }
       
       
@@ -161,10 +173,10 @@ run_MCMC = function(models, datasets, params=list()) {
         post_samples = indep_posterior_samples(a,x, replicates=TRUE, params=MCMC_params)
         
       } else if (model == "4A") {
-        post_samples = spline_posterior_samples(a, x, replicates=TRUE, params=MCMC_params)
+        post_samples = spline_posterior_samples(a, x, replicates=TRUE, params=MCMC_params, basis=3)
         
       } else if (model == "4Aii") {
-        post_samples = spline_posterior_samples(a, x, replicates=TRUE, params=MCMC_params, spatial_confound=TRUE)
+        post_samples = spline_posterior_samples(a, x, replicates=TRUE, params=MCMC_params, basis=3, spatial_confound=TRUE)
         
       } else if (model == "dlm") { 
         post_samples = dlm_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
@@ -181,6 +193,12 @@ run_MCMC = function(models, datasets, params=list()) {
   } # End for loop over datasets
   
 } # End function
+
+
+
+
+
+
 
 
 
@@ -264,19 +282,19 @@ forecast_samples = function(models, datasets, last_data_times, H=1, params=list(
   
   
   if (verbose) {
-    cat("Running MCMC with the following params: \n")
-    cat(paste0("diagnostics=", diagnostics, "\n"))
+    cat("Running forecasting with the following params: \n")
+    cat("diagnostics=", diagnostics, "\n")
     cat(paste0("impute=", impute, "\n"))
-    cat(paste0("rerun=", rerun, "\n"))
-    cat(paste0("root_path=", root_path, "\n\n"))
-    # cat(paste0("last_data_times=", last_data_times, "\n"))
+    cat("rerun=", rerun, "\n")
+    cat("root_path=", root_path, "\n")
+    cat(paste0("last_data_times=", last_data_times, "\n\n"))
   }
   
   
   
   
   # ----------------------------------------------------------------------------
-  # Run or load MCMC, and use it to forecast from the posterior predicitive
+  # Run or load MCMC, and use it to forecast from the posterior predictive
   # distribution.
   # ----------------------------------------------------------------------------
   for (dataset in datasets) {
@@ -290,10 +308,12 @@ forecast_samples = function(models, datasets, last_data_times, H=1, params=list(
     #TODO this never gets used.
     params_copy = params
     
+    # From which times are we running one-step ahead forecasting from.
     times = last_data_times[[dataset]]
     
     if (max(times) > TT) {
-      stop(paste0("Times included for dataset ", dataset," exceed size of dataset.\n"))
+      cat(paste0("Times included for dataset ", dataset," exceed size of dataset.\n"))
+      next
     }
     
     
@@ -306,38 +326,52 @@ forecast_samples = function(models, datasets, last_data_times, H=1, params=list(
         if (!rerun & file.exists(save_path)) {
           
           if (verbose){
-            cat(paste0("Found forecast saved data for ", model, " on dataset ", dataset, "\n"))
+            cat(paste0("Found forecast saved data for ", model, " on dataset ", dataset, ".\n"))
             # f_samples = get(load(save_path))
           }
           
         }
         
-        # Which times I don't have to rerun for.
         indicator_times_path = paste0(root_path, "/", model, "/forecast_samples/", dataset, "/indicator_times.Rdata") 
+        
+        # Variables times stores which times we want to run one-step ahead forecasts for.
+        # We won't generate forecasts if we have the forecasts saved (unless requested to rerun).
         
         if (file.exists(indicator_times_path)) {
           
-          # See where forecasts have already been saved.
+          # This tells us which times do we already have forecasts for.
           indicator_times = get(load(indicator_times_path))
         
           if (!rerun){
-            # See which times are actually new.
+            # If don't rerun, we only look at a subset of times that don't have saved output.
             times = setdiff(times, which(indicator_times))
+            
           }
           
-          # If no times to run, just skip to next model.
+          # We may have no times to run, just skip to next model.
           if (length(times) == 0){
+            cat(paste0("Dataset ", dataset, ", model ", model, " has all this forecast data saved, it can just read forecasts from file.\n"))
             next
           }
         
         } else {
+          # If we don't have an array telling us which indices have saved forecasts,
+          # we will create one.
           indicator_times = array(FALSE, dim=TT)
         }
         
-        # Says what forecasts are going to be saved.
-        indicator_times[times] = TRUE
+        # After we are done generating forecasts, since times tells us where we have generated new
+        # forecasts for, so we update the indicator array to reflect which times we have new one-step forecasts for.
+        # Eventually need to save to file (below).
+        if (length(times)>0){
+          indicator_times[times] = TRUE
+        }
+        if (verbose) {
+          cat(paste0("Dataset ", dataset, ", model ", model, " times are ", times, "\n"))
+        }
         
         
+        # Call the models forecast_samples function.
         if (model == "1A") {
           f_samples = speed_rw_forecast_samples(x, a, custom_times = times) 
           
@@ -368,6 +402,7 @@ forecast_samples = function(models, datasets, last_data_times, H=1, params=list(
           
         }
         
+        # Save forecasts and indicator array.
         save(f_samples, file = save_path)
         save(indicator_times, file = indicator_times_path)
       
