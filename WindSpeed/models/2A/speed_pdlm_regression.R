@@ -116,7 +116,8 @@ speed_pdlm_regression_posterior_samples = function(a, x, ndraw=1000, replicates=
   beta_draws = pdlm_draws$beta
 
   if (!replicates) {
-    return(pdlm_draws)
+    #return(pdlm_draws)
+    return(list(S_draws=S_draws, G_draws=G_draws, W_draws=W_draws, Sigma_draws=Sigma_draws, beta_draws=beta_draws, sigma_w_samples=sigma_w_samples, sigma_e_samples=sigma_e_samples, s_samples=s_samples))
   }
   
   y_rep = array(0, dim = c(TT, n, ndraw))
@@ -148,8 +149,8 @@ speed_pdlm_regression_posterior_samples = function(a, x, ndraw=1000, replicates=
     #y_rep[,draw,] = diag(n) %x% t(rep_x[draw]) * S_draws[,,ndraw] + mvrnorm(TT, mu=c(0,0), Sigma=Sigma_draws[,,draw])
   }
   
-  return(list(pdlm_draws=pdlm_draws, u_rep=u_rep, a_rep=a_rep, logx_rep = logx_rep))
-  
+  #return(list(pdlm_draws=pdlm_draws, u_rep=u_rep, a_rep=a_rep, logx_rep = logx_rep))
+  return(list(S_draws=S_draws, G_draws=G_draws, W_draws=W_draws, Sigma_draws=Sigma_draws, beta_draws=beta_draws, sigma_w_samples=sigma_w_samples, sigma_e_samples=sigma_e_samples, s_samples=s_samples, logx_rep=logx_rep, u_rep=u_rep, a_rep=a_rep))
 }
 
 mediandirALT = function (x) 
@@ -306,13 +307,9 @@ speed_pdlm_regression_forecast_samples = function(x,a, ndraw=1000, xtransform = 
     #gibbs_pdlm(U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, regress=TRUE, logx=log(x+1), speed_model = "A", miss_speed_post=speed_rw_noise_miss_full_posterior_helper, speed_post_samples= speed_post_samples)
     
     
-    #forecast_G_draws[t,,,] = pdlm_draws$G
-    G_draws = pdlm_draws$G
-    #forecast_W_draws[t,,,] = pdlm_draws$W
-    W_draws = pdlm_draws$W
-    #forecast_V_draws[t,,,] = pdlm_draws$Sigma
+    G_draws = pdlm_draws$G_draws
+    W_draws = pdlm_draws$W_draws
     V_draws = pdlm_draws$Sigma
-    #forecast_S_draws[t,1:(t-1),,] = pdlm_draws$S[t-1,,]
     S_draws = pdlm_draws$S[t-1,,]
     
     beta_draws = pdlm_draws$beta
