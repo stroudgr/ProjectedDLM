@@ -25,10 +25,12 @@ all_datasets = list("buffalo", "santa_ana")
 pretty_names = list(buffalo=buffalo_pretty_name, santa_ana=santa_ana_pretty_name)
 all_data_paths = list(buffalo=buffalo_path, santa_ana=santa_ana_path)
 
+dataset_lengths = list(buffalo=128, santa_ana=8253)
+
 
 all_indices = list(buffalo=buffalo_index, santa_ana=santa_ana_index)
 # Helper to dataset index by name.
-get_index_by_name = function(name) {
+get_index_by_dataset_name = function(name) {
   return(all_indices[[name]])
 }
 

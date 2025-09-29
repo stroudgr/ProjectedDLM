@@ -4,9 +4,7 @@ source("helpers/_helpers.R")
 source("WindSpeed/_helpers.R")
 
 
-# ------------------------------------------------------------------------------
-# Experiment 
-# ------------------------------------------------------------------------------
+
 local(
 {
 # The experiment is Model Visualization: state visualization
@@ -20,19 +18,20 @@ local(
 # - Mandatory param: Which states to create visuals for. TODO this is for histograms. Separate?
 # - Anything else?
 
-models = list("1A", "2A", "3A", "4A")
+models = list("1A", "3A", "4A")
 datasets = list("buffalo", "santa_ana")
-datasets = list("buffalo")
+#datasets = list("buffalo")
 
-buffalo_list = c(4,5,6)
-santa_ana_list = c(7,8,9) #change these
-
-
-states_list = list(buffalo=buffalo_list, santa_ana=santa_ana_list)
 params = list(runMCMC = FALSE)
 
 visualize_states(models, datasets, params=params)
 
+
+
+buffalo_list = c(4,5,6)
+santa_ana_list = c(7,8,9) #change these
+
+states_list = list(buffalo=buffalo_list, santa_ana=santa_ana_list)
 # TODO implement!
 #visualize_state_histograms(models, datasets, state_list, params=params)
 

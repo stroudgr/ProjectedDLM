@@ -56,22 +56,13 @@ visualize_states = function(models, datasets, params) {
       post_samples = get(load(save_path))
       
       if (verbose) {
-        cat(paste0("Loading MCMC for model ", model, " dataset ", dataset,  "  ."))
+        cat(paste0("Loading MCMC for model ", model, " dataset ", dataset,  "."))
       }
       
+      visualize_states_helper(dataset, model, post_samples)
+      
       if (dataset == "buffalo") {
-        
-        buffalo_visualize_states(model, post_samples)
-        #get_visualize_states("buffalo", model, post_samples)
         #bv_Sigma(model, post_samples)
-        
-      } else if (dataset == "santa_ana") {
-        
-        santa_ana_visualize_states(model, post_samples)
-        #get_visualize_states("santa_ana", model, post_samples)
-        
-      } else {
-        stop("No such dataset")
       }
       
     }
