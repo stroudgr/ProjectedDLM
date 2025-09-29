@@ -3,9 +3,9 @@ source("WindSpeed/_packages.R")
 source("helpers/_helpers.R")
 source("WindSpeed/_helpers.R")
 
-RUN_EXPERIMENT_1 = FALSE
+RUN_EXPERIMENT_1 = TRUE
 RUN_EXPERIMENT_2 = FALSE
-RUN_EXPERIMENT_3 = TRUE
+RUN_EXPERIMENT_3 = FALSE
 
 # ------------------------------------------------------------------------------
 # Experiment 1
@@ -44,8 +44,12 @@ local({
   params["rerun"] = TRUE
   
   
-  models = list("1A", "2A", "3A", "4A", "dlm")
+  #models = list("1A", "2A", "3A", "4A", "dlm")
+  models = list("4A","4Aii")
+  models = list("4A")
+  #models = list("4Aii")
   datasets = list("santa_ana")
+  #datasets = list("buffalo")
   
   run_MCMC(models, datasets, params) 
   
@@ -71,7 +75,7 @@ if (RUN_EXPERIMENT_3) {
 local({
   
   
-  buffalo_time_steps = 10:20#c(29) # full times was c(29, 44, 53, 109, 128)
+  buffalo_time_steps = 10:128#c(29) # full times was c(29, 44, 53, 109, 128)
   santa_ana_time_steps = c(300, 1500, 2500, 3500, 5000)
   
   

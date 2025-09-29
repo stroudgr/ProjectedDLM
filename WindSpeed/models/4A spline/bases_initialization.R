@@ -1,18 +1,125 @@
-generate_design_matrix <- function(x, knot_vector, degree){
-  return(cbind(outer(x,1:degree,"^"),outer(x,knot_vector,">")*outer(x,knot_vector,"-")^degree))
-}
-
-get_design_matrix3 = function(x){
-  knots = x
-  B_poly <- sapply(1:(3-1), function(j) x^j)
-  B_tp <- sapply(knots, function(k) pmax(x - k, 0)^3)
-  B <- cbind(B_poly, B_tp)
-  B
-}
-
-
 library(splines)
 
+
+# ------------------------------------------------------------------------------
+# Helper functions
+# ------------------------------------------------------------------------------
+generate_design_matrix <- function(x, knot_vector, degree){
+  return(cbind(outer(x,1:degree,"^"),outer(x,knot_vector,">")*outer(x,knot_vector,"-")^degree)) 
+}
+
+get_angle_predictions = function(basis, x, a, U){
+  
+  if (basis == 1 | basis == 2) {
+    Bmat = get_design_matrix(basis, x)
+    
+    #mod_spline <- lm(a~Bmat)
+   
+    mod_spline <- lm(U~Bmat)
+    
+    prediction = predict(mod_spline)
+    
+    # Use U or a, doesn't seem to make a difference.
+    #if (dim(prediction)[2] == 2) {
+    a_pred = unitcircle2radians(prediction)
+    #} else {
+    #a_pred = prediction
+    #}
+  } else if (basis == 3) {
+    # TODO move to bases_initialization file.
+    roughness_rate = 0.1
+    
+    fit <- smooth.spline(x, a, spar = 0.5)  # spar controls smoothness
+    a_pred  <- predict(fit, x)$y
+    
+    #a_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, a)
+    #u1_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, U[,1])
+    #u2_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, U[,2])
+    
+    #U_pred = cbind(u1_pred, u2_pred)
+    #a_pred = unitcircle2radians(U_pred)
+    
+  } else if (basis == 4) {
+    
+    a_pred = ols4(x,a)
+    
+  }
+  
+  return(a_pred)
+}
+
+
+
+# ------------------------------------------------------------------------------
+# Basis 1: Just three basis functions.
+# ------------------------------------------------------------------------------ 
+bases_i = list(
+  function(x) {x}, 
+  function(x) {log(x+1)}, 
+  function(x){ (x>10)*1 }
+)
+
+get_design_matrix1 = function(x) {
+  return(sapply(bases_i, function(f) sapply(x, f)))
+}
+
+
+# ------------------------------------------------------------------------------
+# Basis 2: Cubic splines at prespecified knots that seem to work well for 
+#          Buffalo and Santa Ana datasets.
+# ------------------------------------------------------------------------------
+knot_vector_ii = c(-1, 1,4,5,6,7, 10,20, 30)
+
+get_design_matrix2 = function(x){
+  return(generate_design_matrix(x,knot_vector = knot_vector_ii, degree=3  ))
+}
+
+#design_matrix <- generate_design_matrix(degree = 3, knot_vector = c(4,5,6,7, 10,20, 30), x = x)
+#basis_name = "cubic splines"
+#create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
+
+
+
+# ------------------------------------------------------------------------------
+# Basis type #3
+# ------------------------------------------------------------------------------
+get_design_matrix3 = function(x){
+  fit <- smooth.spline(x, x, spar = 0.5)
+  
+  # The design matrix evaluated at x
+  B <- predict(fit, x, type = "lpmatrix")$lp
+  return(B)
+}
+
+
+# ------------------------------------------------------------------------------
+# Basis type #4. Using 
+# ------------------------------------------------------------------------------
+get_design_matrix4 = function(x){
+  B <- ns(x, df = 10)
+  return(B)
+}
+
+# JUST OLS for this basis.
+ols4 = function(x, y, lambda=0.5) {
+  B <- ns(x, df = 10, intercept=TRUE)
+  p <- ncol(B)
+  # Penalty matrix (ridge on coefficients for simplicity)
+  Omega <- diag(p)
+  
+  # Precompute cross-products
+  BtB <- t(B) %*% B
+  BtY <- t(B) %*% y
+  
+  # Initialize
+  c_current <- solve(BtB + lambda * Omega, BtY)
+  
+  return(B %*% c_current)
+}
+
+
+
+# Creates design matrix AND does OLS AND ...
 smoothing_spline_ns <- function(x, y, df = NULL, knots = NULL, lambda = 0){
   x <- as.numeric(x)
   y <- as.numeric(y)
@@ -21,7 +128,7 @@ smoothing_spline_ns <- function(x, y, df = NULL, knots = NULL, lambda = 0){
   # Build natural cubic spline basis
   # df = number of basis functions (columns)
   # knots = internal knots (optional)
-  B <- ns(x, df = df, knots = knots)
+  B <- ns(x, df = df, knots = knots, intercept=TRUE)
   p <- ncol(B)
   
   # --- Roughness penalty ---
@@ -59,33 +166,10 @@ smoothing_spline_ns <- function(x, y, df = NULL, knots = NULL, lambda = 0){
 
 
 
-# ------------------------------------------------------------------------------
-# Basis 1: Just three basis functions.
-# ------------------------------------------------------------------------------ 
-bases_i = list(
-  function(x) {x}, 
-  function(x) {log(x+1)}, 
-  function(x){ (x>10)*1 }
-)
-
-get_design_matrix1 = function(x) {
-  return(sapply(bases_i, function(f) sapply(x, f)))
-}
 
 
-# ------------------------------------------------------------------------------
-# Basis 1: Cubic splines at prespecified knots that seem to work well for 
-#          Buffalo and Santa Ana datasets.
-# ------------------------------------------------------------------------------
-knot_vector_ii = c(4,5,6,7, 10,20, 30)
 
-get_design_matrix2 = function(x){
-  return(generate_design_matrix(x,knot_vector = knot_vector_ii, degree=3  ))
-}
 
-#design_matrix <- generate_design_matrix(degree = 3, knot_vector = c(4,5,6,7, 10,20, 30), x = x)
-#basis_name = "cubic splines"
-#create_OLS_regression_plot(dataset, root_path, a, x, basis_name, design_matrix)
 
 
 
@@ -103,11 +187,11 @@ get_design_matrix2 = function(x){
 # Information about all bases choices.
 # ------------------------------------------------------------------------------
 
-bases_list = list(1, 2, 3)
+bases_list = list(1, 2, 3, 4)
 num_bases = length(bases_list)
 get_num_bases = function(){return(num_bases)}
 
-bases_names = list("Three basis", "Hand-picked knots", "All knots + penalize roughness")
+bases_names = list("Three basis", "Hand-picked knots", "All knots + penalize roughness", "ns")
 
 get_num_basis_functions = function(i, x=NULL){
   if (i==1){
@@ -120,9 +204,10 @@ get_num_basis_functions = function(i, x=NULL){
       stop("This basis needs x-data, as knots are at every point.\n")
     }
     return(length(sort(unique(x))) + 3)
-    
+  } else if (i == 4){
+    return(10)
   } else{
-    stop("Bases: there are only ", i, " bases options to choose from. Pick a number between 1 to ", i, " please.\n")
+    stop("Bases ,", i, " : there are only ", num_bases, " bases options to choose from. Pick a number between 1 to ", num_bases, " please.\n")
   }
 }
 
@@ -134,9 +219,11 @@ get_design_matrix = function(i, x){
     return(get_design_matrix2(x))
   } else if (i==3) {
     return(get_design_matrix3(x))
-    
+  }
+  else if (i==4) {
+    return(get_design_matrix4(x))
   } else {
-    stop("Bases: there are only ", i, " bases options to choose from. Pick a number between 1 to ", i, " please.\n")
+    stop("Bases: there are only ", num_bases, " bases options to choose from. Pick a number between 1 to ", num_bases, " please.\n")
   }
     
   

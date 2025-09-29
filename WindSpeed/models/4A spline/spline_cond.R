@@ -1,44 +1,46 @@
 source("WindSpeed/models/4A spline/spline_gibbs.R")
+source("WindSpeed/models/4A spline/bases_initialization.R")
 
 # Prereq: a should be radians.
-spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, params, bases, spatial_confound=FALSE) {
+spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransform=function(x){log(x+1)}, params, basis, spatial_confound=FALSE) {
   
   verbose = FALSE
   stan_output = TRUE
   diagnostics = FALSE  
   
+  if ("verbose" %in% names(params)) {
   if (params[["verbose"]]) {
     verbose = TRUE
   }
+  }
   
+  if ("stan_output" %in% names(params)){
   if (params[["stan_output"]] == FALSE) {
     stan_output = FALSE
   }
+  }
   
+  if ("diagnostics" %in% names(params)) {
   if (params[["diagnostics"]]) {
     diagnostics = TRUE
+  }
   }
   
   
   TT = length(x)
   n = 2
   p = 2
-  L=3
+  
   
   logx = xtransform(x)
   
-  bases = list(
-    function(x) {x}, 
-    function(x) {log(x+1)}, 
-    function(x){ (x>10)*1 }
-  )
-  bases = bases[1:L]
-  
-  
   # This is TxL
-  BX = sapply(bases, function(f) sapply(x, f))
+  #BX = sapply(bases, function(f) sapply(x, f))
+  #BX = get_design_matrix(basis, x)
+  
+  
   # DO I have to transpose it?
-  proj_BX = BX %*% solve(t(BX) %*% BX) %*% t(BX)
+  #proj_BX = BX %*% solve(t(BX) %*% BX) %*% t(BX)
   
   
   
@@ -96,7 +98,7 @@ spline_posterior_samples = function(a, x, ndraw=1000, replicates=FALSE, xtransfo
   speed_post_samples = list(psi = s_samples, sigma_sq = sigma_e_samples)
   
   #pdlm_draws = gibbs_pdlm_basic(U, FF, V, G, W, s1, P1, r0, ndraw, pdlm_burn, pdlm_thin)
-  pdlm_draws = gibbs_pdlm_splines(num_basis=3, U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, speed_model="A", x=x, spatial_confound = spatial_confound)
+  pdlm_draws = gibbs_pdlm_splines(num_basis=3, U[1:TT, ], FF[, , 1:TT], ndraw = ndraw, burn = pdlm_burn, thin = pdlm_thin, speed_model="A", x=x, basis=basis, spatial_confound = spatial_confound)
   
   
   S_draws = pdlm_draws$S#[TT,,]

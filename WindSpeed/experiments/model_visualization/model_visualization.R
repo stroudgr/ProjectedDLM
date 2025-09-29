@@ -21,6 +21,7 @@ visualize_states = function(models, datasets, params) {
       if (dataset == "buffalo") {
         
         buffalo_visualize_states(model, post_samples)
+        bv_Sigma(model, post_samples)
         
       } else if (dataset == "santa_ana") {
         

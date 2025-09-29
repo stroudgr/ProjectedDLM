@@ -62,7 +62,7 @@ valid_datasets = function(datasets, print_output=TRUE) {
 model_alphanumeric_identifiers = c("1A", "two_dlms", "2A", "1B", "3A", "4A")
 
 # Give each model a number.
-model_indices = list("1A" = 1, "two_dlms"=2, "2A"=3, "1B"=4, "3A"=5, "4A"=6)
+model_indices = list("1A" = 1, "two_dlms"=2, "2A"=3, "1B"=4, "3A"=5, "4A"=6, "4Aii"=7)
 get_model_index_by_name = function(id) {
   return(model_indices[[id]])
 }

@@ -67,7 +67,7 @@ create_dataset_figures = function(datasets, params){
     # 3. OLS for different bases
     # --------------------------------------------------------------------------
     
-    bases = c(3)
+    bases = c(1,2,3, 4)
     create_OLS_regression_plots(dataset, root_path, bases = bases)
     
   }
@@ -117,7 +117,8 @@ create_angle_v_speed_figure = function(dataset, root_path, a, x) {
     geom_point(size = 0.5) +
     scale_color_gradient(low = "blue", high = "red") +
     #geom_path(color = "blue")+
-    labs(title = paste0(angle_v_speed_title, ", Colored by Index"), x="Speed", y="Angle", color = "Time (index)") +
+    labs(title = paste0(angle_v_speed_title, ", Colored by Index"), 
+         x="Speed (mph)", y="Angle (radians)", color = "Time (index)") +
     theme_minimal()
   
   
@@ -141,13 +142,13 @@ create_time_plots = function(dataset, root_path, a, x) {
     title = "Buffalo time versus "
     folder_name = paste0(root_path, "1. buffalo/")
     xlab = "Time (hours)"
-    speed_lab = "knots"
+    speed_lab = "Speed (knots)"
     
   } else if (dataset == "santa_ana") {
     title = "Santa Ana time versus "
     folder_name = paste0(root_path, "2. santa_ana/")
     xlab = "Time (minutes)"
-    speed_lab = "mph"
+    speed_lab = "Speed (mph)"
   }
   
   a_lab = "Angle (radians)"
@@ -178,7 +179,7 @@ create_time_plots = function(dataset, root_path, a, x) {
 # 3. OLS plot
 # ------------------------------------------------------------------------------
 
-create_OLS_regression_plots = function(dataset, root_path, bases=c(1,2,3)) {
+create_OLS_regression_plots = function(dataset, root_path, bases=c(1,2,3), verbose=FALSE) {
   
   
   if (dataset == "buffalo") {
@@ -189,7 +190,7 @@ create_OLS_regression_plots = function(dataset, root_path, bases=c(1,2,3)) {
     U = radians2unitcircle(a)
     
   } else if (dataset == "santa_ana") {
-    cat("Santa\n")
+    
     fname = paste0(root_path, "2. santa_ana/")
     xa = load_dataset("santa_ana")
     x = xa$x
@@ -202,48 +203,25 @@ create_OLS_regression_plots = function(dataset, root_path, bases=c(1,2,3)) {
   
   for (basis in bases) {
   
-  Bmat = get_design_matrix(basis, x)
+  
   
   if (!(basis %in% 1:get_num_bases())){
     cat(paste0("Invalid basis num ", basis  , "\n"))
     next 
   }
-  
-  if (basis == 1 | basis == 2) {
-    #mod_spline <- lm(a~Bmat)
-    mod_spline <- lm(U~Bmat)
     
-    prediction = predict(mod_spline)
-    
-    # Use U or a, doesn't seem to make a difference.
-    #if (dim(prediction)[2] == 2) {
-      a_pred = unitcircle2radians(prediction)
-    #} else {
-    #a_pred = prediction
-    #}
-  } else if (basis == 3) {
-    # TODO move to bases_initialization file.
-    roughness_rate = 0.1
-    
-    fit <- smooth.spline(x, a, spar = 0.5)  # spar controls smoothness
-    a_pred  <- predict(fit, x)$y
-    
-    #a_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, a)
-    #u1_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, U[,1])
-    #u2_pred = Bmat %*% solve(crossprod(Bmat) + roughness_rate*roughness)%*%crossprod(Bmat, U[,2])
-    
-    #U_pred = cbind(u1_pred, u2_pred)
-    #a_pred = unitcircle2radians(U_pred)
-    
-  }
+  a_pred = get_angle_predictions(basis, x, a, U)
   
   basis_name = bases_names[[basis]]
   
-  p= ggplot() +
+  p = ggplot() +
     geom_point(aes(x = x, y = a), color = "black", alpha = .5) +
     geom_line(aes(x = x, y = a_pred), color = "red", linewidth=1.5)+
-    labs(title= paste0("OLS for direction on ", basis_name, " for ", dataset))
+    labs(title= paste0("OLS for direction on ", basis_name, " for ", dataset),
+         x="Speed (mph)", y="Angle (radians)")
+  suppressMessages(
   ggsave(paste0(fname, "OLS_", basis_name, ".png"),  plot=p)
+  )
   
   }
 }

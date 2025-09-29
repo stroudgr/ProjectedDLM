@@ -4,7 +4,7 @@ source("WindSpeed/models/4A spline/bases_initialization.R")
 
 
 
-gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, x, speed_model = NA, miss_speed_post=NA, speed_post_samples = NA, bases=1, spatial_confound=FALSE){
+gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, ndraw = 1000, burn = 0, thin = 1, x, speed_model = NA, miss_speed_post=NA, speed_post_samples = NA, basis=3, spatial_confound=FALSE){
   # ----------------------------------------------------------------------------
   # dimensions
   # ----------------------------------------------------------------------------
@@ -16,25 +16,36 @@ gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, nd
   M = burn + thin * ndraw
   
   
-  L = get_num_basis_functions(bases)
+  #L = get_num_basis_functions(basis)
   # This is TT x L
   # and BX[i,j] = bj(xi)
-  BX = get_design_matrix(bases, x) # TODO Do I have to transpose it?
-  # BX is T x L
-  roughness_rate = 0
+  basis=2
+  BX <- get_design_matrix(2, x)
+  L <- ncol(BX)
+  lambda=0.5
   
-  roughness = get_roughness_matrix(bases, x)
+  # Penalty matrix (ridge on coefficients for simplicity)
+  Omega <- diag(L)
   
-  if (bases == 1) {
-    roughness_rate = 0
-  } else if (bases == 2){
-    roughness_rate = 0
-  } else if (bases == 3) {
-    roughness_rate = 0.1
-  } else{
-    stop("Not a valid choice for bases.")
-  }
+  # Storage for posterior samples of coefficients
+  #coef_samples <- matrix(NA, nrow = n_iter, ncol = L)
   
+  # Precompute cross-products
+  BtB <- t(BX) %*% BX
+  BtB_inv = solve(BtB + lambda * Omega)
+  #BtY <- t(B) %*% y
+  
+  # Initialize
+  #c_current <- solve(BtB + lambda * Omega, BtY)
+  
+  
+  
+  
+  
+  #BX = get_design_matrix(basis, x) # TODO Do I have to transpose it?
+  #L = dim(BX)[2]
+  
+  library("corpcor")
   
   # This is T x T
   proj_BX = BX %*% solve(t(BX) %*% BX) %*% t(BX)
@@ -160,7 +171,7 @@ gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, nd
     
     for (i in 1:n) {
       for (j in 1:L) {
-        Y[,i] = Y[,i] - beta[j,i]*bases[[j]](x)
+        Y[,i] = Y[,i] - beta[j,i]* BX[,L] #bases[[j]](x)
       }
     }
     
@@ -209,35 +220,27 @@ gibbs_pdlm_splines <- function(num_basis=3, U, FF, prior = NULL, init = NULL, nd
     # draw beta | ...
     # --------------------------------------------------------------------------
     #if (regress) {
-      
-      # Y is TTxn
+    synth_data = c(t(Y - Mu))
     
-      synth_data = c(t(Y - Mu)) #TT*n length vector.
-      #synth_data = c(Y - Mu) #Goes from Txn to a TT*n length vector.
+    #BX is TT x L
+    V = kronecker(BX, diag(n)) # %x%
+    inv_O = diag(TT) %x% solve(Sigma) 
     
-      for (i in 1:n) {
-      
+    #Q = Sigma_beta_inv + t(V) %*% inv_O %*% V
+    Q = t(V) %*% inv_O %*% V
+    
+    Q_inv = solve(Q + diag(0.001, nrow=dim(Q)[1]))
+    
+    #ell = Sigma_beta_inv %*% mu_beta + t(V) %*% inv_O %*% (synth_data)
+    ell =  t(V) %*% inv_O %*% (synth_data)
+    
+    
+    beta_t = mvrnorm(1,Q_inv %*% ell, Sigma= Q_inv)
+    
+    beta_t = matrix(beta_t, nrow = n, ncol=L, byrow=FALSE)
+    
+    beta = t(beta_t)
         
-        #BX is TT x L
-        V = kronecker(BX, diag(n)) # %x%
-        inv_O = diag(TT) %x% solve(Sigma) 
-        
-        #Q = Sigma_beta_inv + t(V) %*% inv_O %*% V
-        Q = t(V) %*% inv_O %*% V
-        
-        Q_inv = solve(Q)
-        
-        #ell = Sigma_beta_inv %*% mu_beta + t(V) %*% inv_O %*% (synth_data)
-        ell =  t(V) %*% inv_O %*% (synth_data)
-        
-        
-        beta_t = mvrnorm(1,Q_inv %*% ell, Sigma= Q_inv)
-        
-        beta_t = matrix(beta_t, nrow = n, ncol=L, byrow=FALSE)
-        
-        beta = t(beta_t)
-        
-      }
       
     #}
     
