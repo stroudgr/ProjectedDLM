@@ -21,7 +21,7 @@ create_dataset_figures = function(datasets, params){
   # Removes any datasets that are invalid. 
   datasets = valid_datasets(datasets, print_output = TRUE)
   
-  root_path = "WindSpeed/experiments/data_visualization/"
+  root_path = "WindSpeed/experiments/data_visualization/results/"
   
   
   # ----------------------------------------------------------------------------
