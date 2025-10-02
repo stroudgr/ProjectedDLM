@@ -45,22 +45,26 @@ source("WindSpeed/initialization.R")
 #' run_MCMC(models=list("1A"), datasets=list("buffalo"), params)
 run_MCMC = function(models, datasets, params=list()) {
   
-  root_path = MCMC_PATH
+  # ----------------------------------------------------------------------------
+  # Verify inputs.
+  # ----------------------------------------------------------------------------
+  datasets = valid_datasets(datasets)
+  models = valid_models(models)
   
   # ----------------------------------------------------------------------------
   # Optional parameter processing
   # ----------------------------------------------------------------------------
   
+  root_path = MCMC_PATH
   if ("root_path" %in% names(params) ) {
     root_path = params[["root_path"]]
   }
   
-  verbose = FALSE
-  if ( "verbose" %in% names(params)) {
-    if (params[["verbose"]] == TRUE ) {
-      verbose = TRUE
-    }
-  }
+  # Helpers in helpers.R
+  impute = extract_impute_list(params, datasets)
+  verbose = get_optional_boolean_variable("verbose", params, default_value=FALSE) 
+  diagnostics = get_optional_boolean_variable("diagnostics", params, default_value=FALSE)
+  rerun = get_optional_boolean_variable("rerun", params, default_value=FALSE)
   
   end_times = list()
   if ("end_times" %in% names(params)) {
@@ -69,34 +73,18 @@ run_MCMC = function(models, datasets, params=list()) {
     if (!is.list(end_times)){
       stop("Error in joint_model_mcmc: end_times must be a list.")
     }
+    # TODO (Low priority) verify names are subset of dataset names.
     
-  }
-  
-  # Helper in initialization.R
-  impute = extract_impute_list(params, datasets)
-  
-  diagnostics = FALSE
-  if ("diagnostics" %in% names(params)){
-    if (params[["diagnostics"]]) {
-      diagnostics = TRUE
-    }
-  }
-  
-  rerun = FALSE 
-  if ("rerun" %in% names(params)) {
-    if (params[["rerun"]]) {
-      rerun = TRUE
-    }
   }
   
   
   if (verbose) {
     cat("Running MCMC with the following params: \n")
-    cat("diagnostics=", diagnostics, "\n")
-    cat(paste0("impute=", impute, "\n"))
-    cat("rerun=", rerun, "\n")
-    cat("root_path=", root_path, "\n")
-    cat(paste0("end_times=", end_times, "\n"))
+    cat("\tdiagnostics=", diagnostics, "\n")
+    cat(paste0("\timpute=", impute, "\n"))
+    cat("\trerun=", rerun, "\n")
+    cat("\troot_path=", root_path, "\n")
+    cat(paste0("\tend_times=", end_times, "\n"))
     cat("\n")
   }
   
@@ -138,17 +126,23 @@ run_MCMC = function(models, datasets, params=list()) {
       
       # Don't rerun in this case.
       if (!rerun & file.exists(save_path)) {
+        
         if (verbose){
           cat(paste0("Found saved data for model ", model, " on dataset ", dataset, "[1:", TT, "] \n"))
-          # post_samples = get(load(save_path))
         }
         next
+        
       } else if(!rerun & !file.exists(save_path)) {
+        
         stop(paste0("Error: no MCMC data for dataset ", dataset, ", model ", model, " at time ", t, "\n"))
+      
       } else if(rerun ) {
         
         if (!file.exists(save_path)) {
           # TODO: Create file/directory
+        
+        
+          # Then we run MCMC, see below:
         }
         
         
@@ -158,7 +152,6 @@ run_MCMC = function(models, datasets, params=list()) {
       if (verbose) {
         cat(paste0("Running model ", model, " on dataset ", dataset, "[1:", end_time, "] \n"))
       }
-      
       
       if (model == "1A") {
         post_samples = speed_rw_posterior_samples(a, x, replicates = TRUE, params=MCMC_params)
@@ -235,59 +228,42 @@ run_MCMC = function(models, datasets, params=list()) {
 #' forecast_samples(models=list("1A"), datasets=list("buffalo"), H=1, params=params)
 forecast_samples = function(models, datasets, last_data_times, H=1, params=list()){
   
+  datasets = valid_datasets(datasets)
+  models = valid_models(models)
+  
   root_path = MCMC_PATH
   
   # ----------------------------------------------------------------------------
   # Optional parameter processing
   # ----------------------------------------------------------------------------
-  verbose = TRUE # TODO handle all optional parameters
+
+  # Call helpers in helpers.R
+  impute = extract_impute_list(params, datasets)
+  verbose = get_optional_boolean_variable("verbose", params, default_value = FALSE)
+  rerun = get_optional_boolean_variable("rerun", params, default_value = TRUE)
+  diagnostics = get_optional_boolean_variable("diagnostics", params, default_value=FALSE)
   
-  rerun = TRUE
   
   if ("root_path" %in% names(params) ) {
     root_path = params[["root_path"]]
   }
-  
-  verbose = FALSE
-  if ( "verbose" %in% names(params)) {
-    if (params[["verbose"]] == TRUE ) {
-      verbose = TRUE
-    }
-  }
-  
-  #times = params[["time_range"]][[dataset]]
   
   for (dataset in datasets) {
     if (!( dataset %in% names(last_data_times))){
       stop(paste0("Need a list of times for each dataset. Missing for ", dataset, " dataset."))
     }
   }
+
   
-  # Helper in initialization.R
-  impute = extract_impute_list(params, datasets)
-  
-  diagnostics = FALSE
-  if ("diagnostics" %in% names(params)) {
-    if (params[["diagnostics"]]) {
-      diagnostics = TRUE
-    }
-  }
-  
-  rerun = FALSE 
-  if ("rerun" %in% names(params)) {
-    if (params[["rerun"]]==TRUE) {
-      rerun = TRUE
-    }
-  }
   
   
   if (verbose) {
     cat("Running forecasting with the following params: \n")
-    cat("diagnostics=", diagnostics, "\n")
-    cat(paste0("impute=", impute, "\n"))
-    cat("rerun=", rerun, "\n")
-    cat("root_path=", root_path, "\n")
-    cat(paste0("last_data_times=", last_data_times, "\n\n"))
+    cat("\tdiagnostics=", diagnostics, "\n")
+    cat(paste0("\timpute=", impute, "\n"))
+    cat("\trerun=", rerun, "\n")
+    cat("\troot_path=", root_path, "\n")
+    cat(paste0("\tlast_data_times=", last_data_times, "\n\n"))
   }
   
   
@@ -304,9 +280,6 @@ forecast_samples = function(models, datasets, last_data_times, H=1, params=list(
     x = data_contents$x
     a = data_contents$a
     TT = length(x)
-    
-    #TODO this never gets used.
-    params_copy = params
     
     # From which times are we running one-step ahead forecasting from.
     times = last_data_times[[dataset]]

@@ -27,20 +27,7 @@ create_dataset_figures = function(datasets, params){
   # ----------------------------------------------------------------------------
   # Optional parameter processing
   # ----------------------------------------------------------------------------
-  
-  impute = list()
-  if (!("impute" %in% names(params))){
-    params["impute"] = TRUE
-  }
-  
-  if (params[["impute"]] == TRUE | params[["impute"]] == FALSE) {
-    for (dataset in datasets) {
-      impute[dataset] = params[["impute"]]
-    }
-  } else { # If I pass in a custom list to specify for each dataset.
-    impute = params[["impute"]] 
-    # TODO check validity of above. Add to helpers.R?
-  }
+  impute = get_impute_list(datasets, params)
   
   # ----------------------------------------------------------------------------
   # Create figures for each dataset.
@@ -97,6 +84,8 @@ create_angle_v_speed_figure = function(dataset, root_path, a, x) {
   } else if (dataset == "santa_ana") {
     angle_v_speed_title = "Santa Ana angle over speed"
     angle_v_speed_fname = paste0(root_path, "2. santa_ana/santa_ana_angle_v_speed")
+  } else {
+    stop("create_OLS_regression_plots : no such dataset ", dataset, "\n")
   }
   
   #smaller_indices = seq(from = 1, to=TT, by=10)
@@ -105,14 +94,13 @@ create_angle_v_speed_figure = function(dataset, root_path, a, x) {
   
   TT = length(x)
   
-  # Create data frame
-  # Add a little noise for less overall of points.
+  # Create data frame.
+  # Add a little noise for less overlapping of points.
   df <- data.frame(x = x + rnorm(TT, 0, 0.2), y = a, index = 1:TT)
   #sub_index = seq(1, nrow(df), by = 5)
   sub_index = 1:nrow(df)
   #df <- df[sub_index, ]
   
-  # Plot: color by index (time)
   p = ggplot(df, aes(x = x[sub_index], y = a[sub_index], color = 1:nrow(df))) +
     geom_point(size = 0.5) +
     scale_color_gradient(low = "blue", high = "red") +
@@ -120,10 +108,6 @@ create_angle_v_speed_figure = function(dataset, root_path, a, x) {
     labs(title = paste0(angle_v_speed_title, ", Colored by Index"), 
          x="Speed (mph)", y="Angle (radians)", color = "Time (index)") +
     theme_minimal()
-  
-  
-  
-  #ggsave(paste0(angle_v_speed_fname, ".png"), plot = p, width = 6, height = 4, dpi = 300)
   
   ggsave(paste0(angle_v_speed_fname, ".png"), plot = p, width = 6, height = 4, dpi = 300)
   
@@ -149,6 +133,8 @@ create_time_plots = function(dataset, root_path, a, x) {
     folder_name = paste0(root_path, "2. santa_ana/")
     xlab = "Time (minutes)"
     speed_lab = "Speed (mph)"
+  } else {
+    stop("create_OLS_regression_plots : no such dataset ", dataset, "\n")
   }
   
   a_lab = "Angle (radians)"
@@ -210,8 +196,7 @@ create_OLS_regression_plots = function(dataset, root_path, bases=c(1,2,3), verbo
     next 
   }
     
-  a_pred = get_angle_predictions(basis, x, a, U)
-  
+  a_pred = get_OLS_angle_predictions_for_basis(basis, x, a, U)
   basis_name = bases_names[[basis]]
   
   p = ggplot() +

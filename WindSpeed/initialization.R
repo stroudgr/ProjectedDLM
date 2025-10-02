@@ -80,7 +80,7 @@ model_pretty_names = list("1A" = "speed random walk + noise",
 
 # Give each model a shorter name
 model_names = list("1A" = "speed_rw", 
-                   "two_dlms" = "DLM", 
+                   "two_dlms" = "dlm", 
                    "2A" = "speed_pdlm_regression", 
                    "1B" = "speed_tvar", 
                    "3A" = "independ", 
@@ -100,7 +100,7 @@ valid_models = function(models, print_output=TRUE) {
   
   if (print_output) {
     for (r in removals) {
-      cat(paste0(r, " is not the name of a model."))
+      cat(paste0(r, " is not the name of a model.\n"))
     }
   }
   

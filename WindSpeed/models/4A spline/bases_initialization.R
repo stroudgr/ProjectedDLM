@@ -8,7 +8,7 @@ generate_design_matrix <- function(x, knot_vector, degree){
   return(cbind(outer(x,1:degree,"^"),outer(x,knot_vector,">")*outer(x,knot_vector,"-")^degree)) 
 }
 
-get_angle_predictions = function(basis, x, a, U){
+get_OLS_angle_predictions_for_basis = function(basis, x, a, U){
   
   if (basis == 1 | basis == 2) {
     Bmat = get_design_matrix(basis, x)
